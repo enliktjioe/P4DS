@@ -248,21 +248,20 @@ sales_records <- cbind(accounts, sales, netsales)
 1. You learned how to bind the three vectors by columns. Now create a matrix named `sales_records` and bind `sales`, `returns` and `netsales` by rows (instead of columns). You can do this with `rbind` (row-bind)
 ```{r}
 # Your code here
-
-
+sales_records <- rbind(sales,returns,netsales)
 ```
 
 2. You can optionally check that you've done the above step correctly by printing out the matrix and / or use `dim()` to verify that is in fact a 3x3 matrix. Now assign `accounts` as column names to your matrix. To assign column names to a matrix, we can use `colnames(mymatrix) <- c("Name1", "Name2", "Name3")`: 
 ```{r}
 # Your code here
-
-
+dim(sales_records)
+colnames(sales_records) <- accounts
 ```
 
 3. Print our `sales_records`:
 ```{r}
 # Your code here
-
+sales_records
 
 ```
 
