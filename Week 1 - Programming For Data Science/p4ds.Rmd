@@ -329,6 +329,9 @@ First make sure the data you'll like to work with is also in your current direct
 ```{r}
 retail <- read.csv("data_input/retail.csv")
 str(retail)
+
+retail <- read.csv("data_input/retail.csv", header = FALSE, stringsAsFactors = FALSE) 
+# extra argument just in case
 ```
 
 The two lines of code above does two things:  
@@ -403,6 +406,64 @@ table(retail$Category, retail$Segment) # 1st method
 nrow(retail[retail$Category == "Furniture" & retail$Segment == "Home Office", ]) # 2nd method
 ```
 
+Proportion of table and Pie Chart
+```{r}
+table(retail$Sub.Category)
+prop.table(table(retail$Sub.Category))
+
+pie(table(retail$Ship.Mode))
+```
+
+How many percentage of our sales were shipped to Corporate on First Class?
+Tip: `prop.table(table(retail...))`
+Create a two-dimensional table, `table(x$x, x$y)`
+Wrap the table under `prop.table()`
+
+```{r}
+table1 <- table(retail$Segment, retail$Ship.Mode)
+prop.table(table1) * 100 # multiply by 100 to format it into percentage
+# ANSWER = 0.04852912 (4.85%)
+```
+
+Among the shipments to Corporate, how many percent were on first class?
+```{r}
+## HARD CODE method
+table2 <- table(retail$Segment == "Corporate", retail$Ship.Mode)
+table2
+485/(485+114+609+1812) * 100
+# ANSWER = 0.160596 (16.06%)
+
+## Best Practice method - Think first, and start code later
+# Subset for Corporate Segment, call it corpsales
+corpsales <- retail[retail$Segment == "Corporate",]
+corpsales
+
+# Use prop.table on the corpsales
+table3 <- table(corpsales$Ship.Mode)
+table3
+prop.table(table3) * 100
+
+## Another method
+table("Corporate Segment" = retail[retail$Segment == "Corporate", "Ship.Mode"])
+```
+
+Date format
+```{r}
+str(retail)
+
+# as.Date()
+birthday <- "11/04/1990"
+birthday <- as.Date(birthday, format = "%d/%m/%Y")
+class(birthday)
+print(birthday)
+```
+
+Our pre-processing data:
+```{r}
+str(retail)
+retail$Order.ID <- as.character(retail$Order.ID)
+retail$Product.Name <- as.character(retail$Product.Name)
+```
 
 
 
