@@ -3,6 +3,10 @@ title: "Algoritma Academy: Programming for Data Science"
 author: "Samuel Chan"
 date: "Updated: June 23, 2018"
 output: 
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
+  fig_caption: yes
   html_document:
     toc: true
     toc_depth: 2
@@ -12,10 +16,6 @@ output:
     theme: flatly
     highlight: tango
     css: style.css
-  fig_caption: yes
-  pdf_document:
-    latex_engine: xelatex
-    fig_caption: yes
 ---
 Before you go ahead and run the codes in this coursebook, it's often a good idea to go through some initial setup. Under the *Libraries and Setup* tab you'll see some code to initialize our workspace, and the libraries we'll be using for the projects. You may want to make sure that the libraries are installed beforehand by referring back to the packages listed here. Under the *Training Focus* tab we'll outline the syllabus, identify the key objectives and set up expectations for each module.
 
@@ -328,7 +328,7 @@ With the foundations laid, let's now take a look at a real life dataset and appl
 First make sure the data you'll like to work with is also in your current directory, and use the `read.csv()` to read our csv file into your global environment. Having our CSV in the same directory as the one we're working in isn't required, we may have used the full path as well. However, to keep our projects organized I would recommend you keep your scripts, working files, and its dependent data in the same directory whenever it's convenient to do so: 
 ```{r}
 retail <- read.csv("data_input/retail.csv")
-names(retail)
+str(retail)
 ```
 
 The two lines of code above does two things:  
@@ -350,7 +350,8 @@ purchases <- 15; purchases * 2;
 Call `str()` on our `retail` dataset the same way you use `names()`. `str()` returns the structure of an R Object and we'll be using it a lot given how helpful that is. 
 ```{r}
 # Your code here
-
+str(retail)
+summary(retail)
 ```
 
 
