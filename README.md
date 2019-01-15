@@ -1,5 +1,5 @@
-# P4DS
-Algoritma Data Science Academy
+# Algoritma Data Science Academy
 Week 1 - Programming for Data Science (P4DS)
-14-18 January 2019
-This repository used for personal documentation during my study during week 1
+January to March 2019
+This repository used for personal documentation during my study in Algoritma Data Science Academy
+Jakarta, Indonesia
