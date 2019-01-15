@@ -341,6 +341,71 @@ If you have tried calling `names(Retail)` you would have gotten an error that sa
 dim(Retail)
 ```
 
+```{r}
+head(retail, 5)
+```
+
+1. Subsetting
+```{r}
+library()
+retail[1:6, 1:15]
+
+order11816 <- subset(retail, retail$Order.Date == "11/11/16")
+order11816 <- subset(retail, retail$Order.Date == "11/11/16" | 
+                              retail$Order.Date == "12/11/16")
+order11816
+
+retail[1:7, c(6,8,9)]
+
+```
+
+Take all columns, and take all rows except the first (second row to last row)
+```{r}
+retail[2:9994, ] # This is working as normal, but not the best practice
+retail[2:nrow(retail), ] # The best practice for production
+
+retail[-1, ] # except first row
+retail[-3, ] # except third row
+
+retail[retail$Profit != 0, c(10, 13:15)]
+retail[retail$Profit != 0, c("Sub.Category", "Quantity", "Discount", "Profit")]
+
+retail[retail$Sub.Category == "Chairs", c(10, 13, 15)]
+```
+
+How many transactions happen to be losses (Profit < 0) in the Tables sub-category?
+```{r}
+no_profit <- retail[retail$Profit < 0 & retail$Sub.Category == "Tables", ]
+nrow(no_profit)
+
+table(retail$Segment) # Show every segment values
+big_profit <- retail[retail$Profit > 1000 & 
+                      retail$Segment == "Home Office", ]
+nrow(big_profit)
+```
+
+How many of our shipments were on First Class?
+```{r}
+table(retail$Ship.Mode) # 1st method
+nrow(retail[retail$Ship.Mode == "First Class", ]) # 2nd method
+summary(retail) # 3rd method
+
+summary(retail[ ,1:4]) # summary combine with subsetting
+table(retail$Ship.Mode, retail$Segment) # 2-dimensional table
+```
+
+How many Furniture did we sell to Home Office customers?
+```{r}
+summary(retail)
+table(retail$Category, retail$Segment) # 1st method
+# ANSWER: 362
+
+nrow(retail[retail$Category == "Furniture" & retail$Segment == "Home Office", ]) # 2nd method
+```
+
+
+
+
 Notice also that R commands are separated either by a semi-colon (';'), or by a newline. So we can write our code like the above, or we could have separate the commands with ';'. For the most part, we will stick to writing code using the new line format as it makes our code more readable. An example of two commands on the same line:
 ```{r}
 purchases <- 15; purchases * 2; 
