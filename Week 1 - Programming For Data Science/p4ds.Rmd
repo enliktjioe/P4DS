@@ -624,6 +624,12 @@ table(retail$Order.Month)
 ```
 
 
+*Cross Tabulation xtabs() can't used for implement function*
+*Use aggregate() instead*
+```{r}
+# xtabs(formula = Profit ~ Segment + Ship.Mode, data = retail)
+aggregate(formula = Profit ~ Segment + Ship.Mode, data = retail, FUN = mean)
+```
 
 
 
