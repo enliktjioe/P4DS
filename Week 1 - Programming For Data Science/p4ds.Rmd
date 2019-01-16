@@ -587,6 +587,32 @@ prop.table(table(homeOffice$Ship.Mode)) * 100
 ANSWER: 60.06
 
 
+## QUIZ DAY 3
+1. Which following segment makes up the most of our >1000 Sales transaction? Subset the data for retail$Sales >= 1000 and then use table() with the 'Segment' and 'Category' variables as its parameters. 
+A.  Consumer Office Supplies 
+B.  Consumer Technology 
+C.  Home Office Furniture 
+D.  Corporate Technology 
+E.  Corporate Furniture 
+
+```{r}
+sales_1000_more <- retail[retail$Sales >= 1000,]
+sales_1000_more
+
+table(sales_1000_more$Segment, sales_1000_more$Category)
+```
+
+2. Among the transactions that ship on 'First Class', how many of them were office supplies (to two decimal points)? 
+A.  21.26% 
+B.  19.57% 
+C.  2.13% 
+D.  60.01% 
+E.  59.16% 
+
+```{r}
+str(retail)
+firstClass <- retail[retail$Ship.Mode == "First Class", ]
+```
 
 
 
