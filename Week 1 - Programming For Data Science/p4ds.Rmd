@@ -560,9 +560,49 @@ retail$Order.Date <- as.Date(retail$Order.Date, "%m/%d/%y")
 
 # "Feature Engineering", create new column based on current column
 retail$Order.Year <- year(retail$Order.Date)
-retail$Order.Month <- month(retail$Order.Date)
-str(retail)
+retail$Order.Month <- months(retail$Order.Date)
+table(retail$Order.Month)
+
+# 1st method
+y2016 <- retail[retail$Order.Year == "2016", ]
+y2017 <- retail[retail$Order.Year == "2017", ]
+summary(y2016$Profit)
+summary(y2017$Profit)
+
+# 2nd method (more efficient) - Cross-Tabulation (`xtabs`)
+str(retail$Ship.Mode)
+xtabs(Profit ~ Segment + Ship.Mode, data = retail)
+
 ```
+
+```{r}
+# 1. Subset for homeOffice
+homeOffice <- retail[retail$Segment == "Home Office", ]
+homeOffice
+
+# 2. prop.table(table(homeOffice$Ship.Mode))
+prop.table(table(homeOffice$Ship.Mode)) * 100
+
+```
+ANSWER: 60.06
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Take a minute to go through the result. Realize how useful this function could be - it packs in a ton of information on the distribution of our data, giving u compact yet useful summary of your data. 
 
