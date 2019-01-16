@@ -612,9 +612,16 @@ E.  59.16%
 ```{r}
 str(retail)
 firstClass <- retail[retail$Ship.Mode == "First Class", ]
+head(firstClass)
+
+prop.table(table(firstClass$Category)) * 100
 ```
 
-
+*Ordered Month*
+```{r}
+retail$Order.Month <- factor(retail$Order.Month, levels = month.name)
+table(retail$Order.Month)
+```
 
 
 
