@@ -631,8 +631,21 @@ table(retail$Order.Month)
 aggregate(formula = Profit ~ Segment + Ship.Mode, data = retail, FUN = mean)
 ```
 
+QUIZ
+Use aggregate / xtabs; Which combination of Segment and Shipment mode is the most profitable in year 2016
+
+```{r}
+retail$Ship.Date <- as.Date(retail$Ship.Date, "%d/%m/%y")
+head(retail$Ship.Date, n = 20)
+
+aggregate(Profit ~ Segment + Ship.Mode, retail[retail$Order.Year == "2016",], FUN = sum)
+xtab1 <- xtabs(Profit ~ Segment + Ship.Mode, retail[retail$Order.Year == "2016",])
+
+plot(xtab1)
 
 
+```
+# ANSWER: Consumer - Standard Class
 
 
 
