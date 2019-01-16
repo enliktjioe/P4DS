@@ -330,7 +330,7 @@ First make sure the data you'll like to work with is also in your current direct
 retail <- read.csv("data_input/retail.csv")
 str(retail)
 
-retail <- read.csv("data_input/retail.csv", header = FALSE, stringsAsFactors = FALSE) 
+# retail <- read.csv("data_input/retail.csv", header = FALSE, stringsAsFactors = FALSE) 
 # extra argument just in case
 ```
 
@@ -549,8 +549,19 @@ R has a built-in function, `summary()` that returns quick summary statistics on 
 
 When `summary()` is called on factor (categorical) variables, it gives us a count on each of the categorical level (more formally called **factor level**), and on numeric variables it will print the 5 number summary of that variable instead. The five number summary is a set of descriptive statistics that provide information about our data and consists of the minimum, maximum, median, first and third quantile:
 
+
 ```{r}
 summary(retail)
+```
+```{r}
+library(lubridate)
+retail <- read.csv("data_input/retail.csv")
+retail$Order.Date <- as.Date(retail$Order.Date, "%m/%d/%y")
+
+# "Feature Engineering", create new column based on current column
+retail$Order.Year <- year(retail$Order.Date)
+retail$Order.Month <- month(retail$Order.Date)
+str(retail)
 ```
 
 Take a minute to go through the result. Realize how useful this function could be - it packs in a ton of information on the distribution of our data, giving u compact yet useful summary of your data. 
