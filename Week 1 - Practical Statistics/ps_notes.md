@@ -89,10 +89,17 @@ Yang paling sering digunakan adalah standar deviasi(sd) karena sd merupakan rata
  * **Hipotesis Alternatif (H1)** = Pengiriman barang furnitur ksofa-5 oleh toko retail tahun ini melebihi 300
 * Pengujian dilakukan dengan menggunakan **p-value**
 * **p-value** adalah nilai peluang terjadinya suatu peristiwa yang sama atau lebih ekstrim dari nilai rata-rata sampel yang didapat di bawah asumsi bahwa *hipotesis nol benar*.
-
+<br />
+<br />
 
 ## Enlik's Class Notes 17 January 2019
-My question:
-* Bab 1 - Menentukan kapan menggunakan median, mean, dan modus? dan juga standar deviation, jangkauan, dan IQR.
-* Bab 2 - Penjelasan lebih dalam tentang Fungsi Peluang
-* Bab 3 - Penjelasan lebih tentang Hipotesis
+* My question:
+ * Bab 1 - Menentukan kapan menggunakan median, mean, dan modus? dan juga standar deviation, jangkauan, dan IQR.
+ * Bab 2 - Penjelasan lebih dalam tentang Fungsi Peluang
+ * Bab 3 - Penjelasan lebih tentang Hipotesis
+
+
+
+
+
+

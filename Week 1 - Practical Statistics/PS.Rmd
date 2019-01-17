@@ -190,8 +190,14 @@ diff(range(numberoftravels))
 
 The interquartile range is the range computed for the middle 50% of the distribution:
 ```{r}
+## This 2 functions is same :)
 IQR(numberoftravels)
+#    ||   #
 as.numeric(quantile(numberoftravels, 0.75) - quantile(numberoftravels, 0.25))
+
+## Keep trying
+quantile(retail$Profit)
+quantile(retail$Profit, probs = c(0, 0.3, 0.9))
 ```
 
 While we can use `quantile()` to obtain the 3rd and 1st quartile individually, these two figures are also presented together with the 0th (the `min()`), 50th (the `median()`), and the 100th (the `max()`) quartiles: together they are called the five-number summary. 
@@ -225,6 +231,15 @@ The larger our sample size _n_ gets, the smaller SE will be: and hence we are le
 ```{r}
 price.coins <- c(1.4, 0.4, 0.8, 1.1, 1.8, 2.2, 2.3, 1.2)
 price.oil <- c(1.6, 1.2, 1.9, 0.8, 0.6, 1.5, 2.1, 1.5)
+
+IQR(price.coins)
+IQR(price.oil)
+
+quantile(price.coins)
+quantile(price.oil)
+
+sd(price.coins) # 0.6654751
+sd(price.oil) # 0.512696 -> Standard Deviation nya lebih kecil dari coins, sehingga Oil lebih 'votality'
 ```
 
 The primary measure of votality used by stock traders and financial analysts is standard deviation, and recall that this metric reflects the average amount of an item's price over a period of time. While the price for our fictional "oil" asset and "coins" asset averaged out to be USD 1.4 over time, which of these two present a higher votality than the other? 
