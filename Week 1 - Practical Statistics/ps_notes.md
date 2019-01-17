@@ -90,5 +90,8 @@ Yang paling sering digunakan adalah standar deviasi(sd) karena sd merupakan rata
 * **p-value** adalah nilai peluang terjadinya suatu peristiwa yang sama atau lebih ekstrim dari nilai rata-rata sampel yang didapat di bawah asumsi bahwa *hipotesis nol benar*.
 
 
+## Enlik's Class Notes 17 January 2019
+
+
 
 
