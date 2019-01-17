@@ -125,8 +125,10 @@ median(shipment.cost)
 We need to be cautious when applying the `mean` on data with a skewed distribution because the mean may not be the best candidate for a **most representative score** compared to other measures of central tendency. For example, a company surveys its employees household income and posted the following monthly household income (IDR, in Mil):
 ```{r}
 salary <- c(7.8, 7.5, 6, 7.5, 4.5, 105, 45, 7.5, 5.5, 4)
-mean(salary)
-median(salary)
+# ada outlier 105 dan 45, sehingga membuat mean tidak efektif, namun median cukup efektif
+mean(salary) #20.03
+median(salary) #7.5
+sort(salary, decreasing = FALSE)
 ```
 
 While the median puts that figure at about 7.25, the mean is about 2.67 times higher and is not truly representative of the actual household income. While most of the employees have a combined household earning of less than 8 mil, the mean value of our household income would have believe that the average household income of our employees is in fact more than 20 mil IDR. 
@@ -141,13 +143,25 @@ mean(retail$Profit, trim = 0.05)
 
 When there are discreet values fora variable, the mode refers to the value that occurs most frequently. This statistic is rarely used in practice. Say we are surveying the number of times a customer place a booking in our travel booking app over the period of a year and collected the following sample:
 ```{r}
+## Contoh fungsi Modus, karena dalam R tidak ada fungsi default Modus seperti Mean dan Median
+
 numberoftravels <- c(2,2,3,1,0,4,2,5,1,2,4)
 
 most <- function(x){
   as.integer(names(sort(-table(x)))[1])
 }
 
+# Fungsi alternatif yang lebih
+most2 <- function(x){
+  as.integer(names(sort(table(x), decreasing = TRUE))[1])
+}
+
 most(numberoftravels)
+most2(numberoftravels)
+
+## Library tambahan untuk menggunakan fungsi bawaan Modus
+library(DescTools)
+Mode(numberoftravels)
 ```
 
 Because R do not have a built-in way of computing the mode, we wrote the code above to tabulate our data (using `table`), multiply the calculation by -1 (and hence giving it the effect of sorting our data in descending order) and then pick the first value.

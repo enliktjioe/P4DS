@@ -1,6 +1,7 @@
 # Algoritma Academy: Practical Statistics
 ## author: "Enlik Tjioe"
 ## date: "Jan 17-18, 2019"
+[Pre-PS Link](https://samuelc.shinyapps.io/preps/)
 
 <br />
 <br />
@@ -91,7 +92,7 @@ Yang paling sering digunakan adalah standar deviasi(sd) karena sd merupakan rata
 
 
 ## Enlik's Class Notes 17 January 2019
-
-
-
-
+My question:
+* Bab 1 - Menentukan kapan menggunakan median, mean, dan modus? dan juga standar deviation, jangkauan, dan IQR.
+* Bab 2 - Penjelasan lebih dalam tentang Fungsi Peluang
+* Bab 3 - Penjelasan lebih tentang Hipotesis
