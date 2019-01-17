@@ -65,7 +65,24 @@ Statisticians and data scientists use descriptive statistics to summarize and de
 
 Let's start by reading in the `retail` dataset:
 ```{r}
-retail <- read.csv("data_input/workshop.csv")
+retail <- read.csv("data_input/workshop.csv", stringsAsFactors = FALSE)
+head(retail)
+str(retail)
+
+retail$Order.Date <- as.Date(retail$Order.Date)
+retail$Ship.Date <- as.Date(retail$Ship.Date)
+
+# lapply() -> melakukan fungsi pada beberapa kolom/variable sekaligus
+retail[, 1:2] <- lapply(retail[, 1:2], as.Date, format = "%Y-%m-%d")
+retail[, 1:2]
+
+# lapply() dengan menggunakan nama variabel
+retail[,c("Customer.ID", "Product.Name")] <- lapply(retail[, c("Customer.ID", "Product.Name")], as.character)
+retail[,c("Customer.ID", "Product.Name")]
+
+# check NA data
+anyNA(retail)
+colSums(is.na(retail))
 ```
 
 Notice that because we did not pass the `stringsAsFactors=F` parameter, the function's default behavior is to convert any character variables into factor variables. In the last workshop we learned how to use `as.Date` and `as.character` to transform variables into the desired type but here let's see how we can combine these two "converter" functions with `lapply` to make our code more concise:    
