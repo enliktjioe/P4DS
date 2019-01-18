@@ -381,13 +381,33 @@ The solution: 175cm is 15cm above the mean, and dividing that by the standard de
 
 ```{r}
 z <- (175-160)/7
-pnorm(z, lower.tail=F)
+pnorm(z, lower.tail=F) 
+# lower.tail	logical; if TRUE (default), probabilities are P[X ≤ x] otherwise, P[X > x].
 # equivalent: 1-pnorm(z)
 ```
 
 **Quiz 2: Supposed we have a population mean of 180cm and standard deviation of 8cm, what is the probability that a randomly picked person being shorter than 174cm?**  
+P(X<174)
+
 ```{r}
 #====Your Solution====
+z <- (174-180)/8
+pnorm(z)*100 # in percentage
+```
+
+**Quiz 3: Supposed we have a population mean of 180cm and standard deviation of 8cm, what is the probability that a randomly picked person being 174 < X < 181?**  
+P(X > 174)
+P(X < 181)
+```{r}
+z1 <- (174 - 180)/8
+z1
+pnorm(z1, lower.tail = F)
+
+z2 <- (181 - 180)/8
+z2
+pnorm(z2)
+
+pnorm(z1, lower.tail = F) - pnorm(z2)
 ```
 
 The Z-scores we used above is useful when relating different measurement distributions to each acting as a common denominator. Essentially, a z-score gives us a "standardized" unit that measure how many standard deviations is a particular statistic away from the mean. This property, as we'll see, is paramount to many statistical hypothesis tests, performance evaluation (more of that when we get to the Machine Learning courses), and in the construction of confidence or prediction intervals. 
