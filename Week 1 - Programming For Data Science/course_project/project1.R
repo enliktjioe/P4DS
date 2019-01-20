@@ -2,12 +2,15 @@
 setwd("Week 1 - Programming For Data Science")
 getwd()
 
-# Create function for getting information/insight from your data
-getInsight <- function(dataSource = "") {
-  #TODO
-}
+# Load Library
+library(lubridate)
 
-getInsight(dataSource = "data_input/retail.csv")
+# Create function for getting information/insight from your data
+#getInsight <- function(dataSource = "") {
+  #TODO
+#}
+
+#getInsight(dataSource = "data_input/retail.csv")
 
 
 # Read data using common function read.cs 
@@ -30,6 +33,8 @@ retail$Product.ID <- as.character(retail$Product.ID)
 retail$Product.Name <- as.character(retail$Product.Name)
 
 # Formulate questions
+# table() used for factor (categorical) variable
+
 # 1. How many our shipments were on Standard Class?
 table(retail$Ship.Mode) # 1st method
 summary(retail) # 2nd method
@@ -44,3 +49,17 @@ prop <- prop.table(table(retail$Segment, retail$Ship.Mode)) * 100
 round(prop, digits = 2) # round numeric value to 2 decimal digits
 # Answer: 30.87%
 
+# "Feature Engineering", create new column based on current column
+retail$Order.Year <- year(retail$Order.Date)
+retail$Order.Month <- month(retail$Order.Date)
+
+# Use xtabs for data manipulation
+# xtabs() can be used for numeric depending on categorical variables
+# by default, it uses the sum() as the breakdown
+xtabs(formula = Profit ~ Category + Segment, data = retail)
+
+# Use aggregate for data manipulation
+# very similar to xtabs except it takes an additional parameter
+aggr1 <- aggregate(formula = Profit ~ Category + Segment, data = retail, FUN = mean)
+profit_category_segment <- as.data.frame(aggr1)
+plot(profit_category_segment)
