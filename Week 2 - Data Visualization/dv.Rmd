@@ -159,6 +159,13 @@ month(most$trending_date)
 day(most$trending_date)
 ```
 
+Tugas: Subset data vids dengan kondisi dislike terbanyak
+```{r}
+str(vids)
+most_dislikes <- vids[vids$dislikes == max(vids$dislikes), ]
+head(most_dislikes)
+```
+
 We will also go ahead and create three new variables for our data frame, storing the hours, period of the day, and the day of the week of each video at the time of publish:
 ```{r}
 vids$publish_hour <- hour(vids$publish_time)
@@ -173,13 +180,17 @@ pw <- function(x){
     }  
 }
 
+# sapply means simple apply
 vids$publish_when <- as.factor(sapply(vids$publish_hour, pw))
 vids$publish_wday <- as.factor(weekdays(vids$publish_time))
+head(vids$publish_wday)
+
 ```
 
 While the `publish_wday` is now a factor, we can also arrange it so our plots later will display them in our desired order:
 ```{r}
 vids$publish_wday <- ordered(vids$publish_wday, levels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+## Ini nih cara order level pakai ordered(x, levels = "")
 ```
 
 
