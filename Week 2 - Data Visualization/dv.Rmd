@@ -107,8 +107,8 @@ table(vids$trending_date)
 `vids` is a dataframe with 13,400 observations and 12 variables. The `trending_date` is stored as a factor and we'll have to convert that to a date object. In previous workshops, you've learned about transformation functions such as `as.character()`, `as.numeric()` and `as.Date()` but here I'll show you another way of working with dates, and that is through the use of `lubridate`. `lubridate` is an R package that makes it easier to work with dates and time. Because `trending_date` currently stores its values in the _yy.dd.mm_ format, all we need to do is to wrap it in `ydm()` like so:
 ```{r}
 # shortcut for <- (ALT + '-')
-vids$trending_date <- 
 vids$trending_date <- ydm(vids$trending_date)
+head(vids)
 ```
 
 The raw dataset does not have the proper names for each category, but identify them by an "id" instead. The following code chunk "switches" them by "id" and also convert that to a factor. We will also convert our video titles to a character vector:
@@ -132,12 +132,22 @@ vids$category_id <- sapply(as.character(vids$category_id), switch,
                            "29" = "Nonprofit and Activism",
                            "43" = "Shows")
 vids$category_id <- as.factor(vids$category_id)
+head(vids$category_id)
 ```
+
+```{r}
+x <- c("1", "2","1")
+# switch(x, "1" = "Mangga","2"="jambu") # masih error 
+sapply(x, switch, "1" = "Mangga","2"="jambu")
+```
+
 
 And with that, the next thing we'll need to do is to convert the `publish_time` variable into a date-time class object. Because we're analyzing trending YouTube videos in the US, it makes sense then that we uses a timezone like New York for our analysis:
 ```{r}
 head(vids$publish_time)
 vids$publish_time <- ymd_hms(vids$publish_time,tz="America/New_York")
+# vids$publish_time <- ymd_hms(vids$publish_time,tz="Asia/Jakarta")
+# CTRL + D = shortcut for DELETE 1 line of code
 ```
 Observe how simple `lubridate` work with dates and time. In fact, when we use `ymd`, `ymd_hms` or one of its variants, these functions recognize the patterns and will identify the right separators as long as the order of formats is correct. These functions will also parse dates correctly even when the input contain differently formatted dates! 
 
