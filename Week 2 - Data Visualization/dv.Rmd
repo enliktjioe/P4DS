@@ -99,10 +99,15 @@ To get started with plotting in R, let's start by reading our data into the envi
 ```{r}
 vids <- read.csv("USvideos.csv")
 names(vids)
+str(vids)
+tail(vids$title, n = 12)
+table(vids$trending_date)
 ```
 
 `vids` is a dataframe with 13,400 observations and 12 variables. The `trending_date` is stored as a factor and we'll have to convert that to a date object. In previous workshops, you've learned about transformation functions such as `as.character()`, `as.numeric()` and `as.Date()` but here I'll show you another way of working with dates, and that is through the use of `lubridate`. `lubridate` is an R package that makes it easier to work with dates and time. Because `trending_date` currently stores its values in the _yy.dd.mm_ format, all we need to do is to wrap it in `ydm()` like so:
 ```{r}
+# shortcut for <- (ALT + '-')
+vids$trending_date <- 
 vids$trending_date <- ydm(vids$trending_date)
 ```
 
