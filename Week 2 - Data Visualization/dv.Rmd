@@ -196,6 +196,8 @@ vids$publish_wday <- ordered(vids$publish_wday, levels=c("Monday", "Tuesday", "W
 
 We'll also go ahead and convert some of the variables into numeric variables as and where appropriate:
 ```{r}
+vids[, c(vids$views, vid)]
+
 vids[,c("views", "likes", "dislikes", "comment_count")] <- lapply(vids[,c("views", "likes", "dislikes", "comment_count")], as.numeric)
 ```
 
@@ -221,6 +223,7 @@ Statistical plots helps us visually inspect our dataset and there are numerous w
 
 ```{r}
 plot(as.factor(vids.u$publish_hour), vids.u$likes/vids.u$views)
+# Analysis: Apakah waktu menonton (dalam jam) mempengaruhi rasio *like* ?
 ```
 The above gives us a boxplot that compares the "likes ratio" across different period of the day. We want to observe if there is any correlation between the likes-to-view percentage and the period of time when the video was published. As expected, we did not find any obvious patterns, in part because this compares the "likes" a video have on the first day of it being "trending" and the hour when it was published onto YouTube. In a sense, any kind of effect the hour variable can have has been adjusted for (or significantly reduced) by the noise between these two events.
 
@@ -252,6 +255,7 @@ Finally, I added a legend for our plot to show how the colors of our scatterplot
 Here's the code:
 ```{r}
 plot(vids.agt$likesp, vids.agt$dislikesp, col=vids.agt$category_id, pch=19)
+# Finish Day 1
 abline(lm(vids.agt$dislikesp ~ vids.agt$likesp), col=8, lwd=2, lty=2)
 legend("topright", legend=levels(vids.agt$category_id), fill=1:3)
 ```
