@@ -42,18 +42,25 @@ summary(r2017)
 # Remove unused dataframe in order to save memory
 rm(retail)
 
-# Use xtabs for data manipulation
-# xtabs() can be used for numeric depending on categorical variables
-# by default, it uses the sum() as the breakdown
-xt1 <- xtabs(formula = Profit ~ Category + Segment, data = r2017)
-xt1
-plot(xt1, main = "2017 Profit on Category and Segment")
 
-# Use aggregate for data manipulation
-# very similar to xtabs except it takes an additional parameter
-aggr1 <- aggregate(formula = Profit ~ Category + Segment, data = r2017, FUN = sum)
-profit2017 <- as.data.frame(aggr1)
-print(profit2017)
+## Create Function
+getInsight <- function(x) {
+  # Use xtabs for data manipulation
+  # xtabs() can be used for numeric depending on categorical variables
+  # by default, it uses the sum() as the breakdown
+  xt1 <- xtabs(formula = Profit ~ Category + Segment, data = x)
+  xt1
+  plot(xt1, main = "2017 Profit on Category and Segment")
+  
+  # Use aggregate for data manipulation
+  # very similar to xtabs except it takes an additional parameter
+  aggr1 <- aggregate(formula = Profit ~ Category + Segment, data = x, FUN = sum)
+  profit2017 <- as.data.frame(aggr1)
+  print(profit2017)
+  
+  # Save our processed data into .csv file
+  write.csv(profit2017, file = "profit2017.csv")
+}
 
-# Save our processed data into .csv file
-write.csv(profit2017, file = "profit2017.csv")
+## Call Function
+getInsight(r2017)
