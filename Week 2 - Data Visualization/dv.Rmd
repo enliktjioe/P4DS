@@ -196,7 +196,7 @@ vids$publish_wday <- ordered(vids$publish_wday, levels=c("Monday", "Tuesday", "W
 
 We'll also go ahead and convert some of the variables into numeric variables as and where appropriate:
 ```{r}
-vids[, c(vids$views, vid)]
+vids[, c(vids$views, vids)]
 
 vids[,c("views", "likes", "dislikes", "comment_count")] <- lapply(vids[,c("views", "likes", "dislikes", "comment_count")], as.numeric)
 ```
@@ -256,8 +256,13 @@ Here's the code:
 ```{r}
 plot(vids.agt$likesp, vids.agt$dislikesp, col=vids.agt$category_id, pch=19)
 # Finish Day 1
+# Resolved error: plot.new has not been called yet
+# https://stackoverflow.com/questions/7154133/plot-new-has-not-been-called-yet
 abline(lm(vids.agt$dislikesp ~ vids.agt$likesp), col=8, lwd=2, lty=2)
 legend("topright", legend=levels(vids.agt$category_id), fill=1:3)
+```
+```{r}
+plot(vids.agt$likesp, vids.agt$dislikesp, col = vids.agt$category_id, pch = 19)
 ```
 
 With `plot`, the default for two numerical variables is to plot a scatterplot, but we can override the default parameters with the `type` argument. The following code chunk is identical to the one above, except for the `type="h"` addition:
