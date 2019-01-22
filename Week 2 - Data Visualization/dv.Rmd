@@ -196,7 +196,7 @@ vids$publish_wday <- ordered(vids$publish_wday, levels=c("Monday", "Tuesday", "W
 
 We'll also go ahead and convert some of the variables into numeric variables as and where appropriate:
 ```{r}
-vids[, c(vids$views, vids)]
+#vids[, c(vids$views, vids)]
 
 vids[,c("views", "likes", "dislikes", "comment_count")] <- lapply(vids[,c("views", "likes", "dislikes", "comment_count")], as.numeric)
 ```
@@ -350,7 +350,7 @@ Notice how `ggplot()` takes two arguments:
 Once we created our `ggplot` object (we named it `g`), we can now add a layer onto it using `geom_`. `geom` is ggplot’s way of handling geometry, i.e. how the data are represented on the plot. To illustrate this idea, let’s add a geom_point and then print the resulting object:
 
 ```{r}
-g + geom_point()
+g + geom_point(aes(size = gempa$size))
 ```
 
 A recap of what we’ve done so far:  
@@ -383,7 +383,6 @@ Let's apply what we've learned above to create a simple plot. We will use `vids.
 ggplot(data = vids.ags, aes(x=category_id, y=dislikes, size=comment_count/views))+
   geom_jitter()
 ```
-
 Mostly, I'm copy-and-pasting the code from earlier chunks and then adding ggplot2 elements onto the plot layer-by-layer. Here I mapped the color of my jitter points to the day of week for each of these videos. I also added a `theme` component to specify the position of my legend:
 ```{r}
 ggplot(data = vids.ags, aes(x=category_id, y=dislikes, size=comment_count/views))+
