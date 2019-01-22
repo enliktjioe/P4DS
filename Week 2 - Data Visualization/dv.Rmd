@@ -261,8 +261,13 @@ plot(vids.agt$likesp, vids.agt$dislikesp, col=vids.agt$category_id, pch=19)
 abline(lm(vids.agt$dislikesp ~ vids.agt$likesp), col=8, lwd=2, lty=2)
 legend("topright", legend=levels(vids.agt$category_id), fill=1:3)
 ```
+
+Learn by doing
 ```{r}
-plot(vids.agt$likesp, vids.agt$dislikesp, col = vids.agt$category_id, pch = 19)
+plot(x = vids.agt$likesp, y = vids.agt$dislikesp, col = vids.agt$category_id,
+      xlab = "Likes Ratio", ylab = "Dislikes Ratio", main = "Likes vs Dislikes Ratio")
+legend("topright", legend = levels(vids.agt$category_id), fill = 1:3)
+abline(h = 0.005, v = 0.05, lty = 5, lwd = 5, col = "red")
 ```
 
 With `plot`, the default for two numerical variables is to plot a scatterplot, but we can override the default parameters with the `type` argument. The following code chunk is identical to the one above, except for the `type="h"` addition:
