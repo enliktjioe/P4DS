@@ -507,10 +507,27 @@ vids.m <- melt(vids.u[vids.u$comments_disabled == F,c(4,7,8,9)])
 rbind(head(vids.m), tail(vids.m))
 ```
 
+```{r}
+laporan <- data.frame(produk = c("Apel", "Pisang", "Melon"),
+                      tahun2015 = c(15,40,25),
+                      tahun2016 = c(32, 44, 59),
+                      tahun2017 = c(18, 10, 50))
+head(laporan)
+
+laporan <- melt(laporan, id.vars = "produk", variable.name = "tahun",
+                value.name = "total")
+
+# string manipulation
+laporan$tahun <- as.numeric(gsub("tahun", "", laporan$tahun))
+
+ggplot(laporan, aes(x = tahun, y = total)) +
+  geom_line(aes(linetype = produk, col = produk))
+
+```
 And using the melted dataframe, we can now create `ggplot`. As a start, we'll create a column plot and visualize the `value` of each `variable` in each of the `category_id`. We map the color of each bars to `variable_id` using `fill` like the following: 
 ```{r}
 ggplot(vids.m, aes(x=category_id, y=value))+
-  geom_col(position="dodge", aes(fill=vids.m$variable))+
+  geom_col(position="stack", aes(fill=vids.m$variable))+
   coord_flip()
 ```
 
