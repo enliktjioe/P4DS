@@ -802,6 +802,9 @@ ggplot(data = vids.ags, aes(x=category_id, y=dislikes, size=comment_count/views)
   theme(legend.position = "none")
 ```
 
+[ggplot2 visualization tips](http://r-statistics.co/Top50-Ggplot2-Visualizations-MasterList-R-Code.html)
+
+
 ## Introduction to Leaflet [Optional]
 Leaflet is among the most popular JS library for interative maps, used by websites such as The New York Times, The Washington Post, GitHub and Flickr[^3]. The R package `leaflet` allows us to create leaflet maps directly in R code. The steps are as follow:
 
