@@ -412,6 +412,13 @@ Recall that we can use `labs()` to change the labels on our plot and we did just
 ##   theme() +
 ##   labs(title="Dislikes to View Comparison", subtitle="Youtube Trending Data, 2018", x="Video Category",       y="Dislikes/View", caption="Made by Carl Gauss, 28 Jan 2018")
 
+ggplot(data = vids.ags, aes(x=category_id, y=dislikes, size=comment_count/views))+
+  geom_boxplot()+
+  geom_jitter(aes(col=publish_wday))+
+  theme(legend.position = "none") +
+  labs(title = "Dislikes to View Comparison", subtitle = "YouTube Trending Data, 2018", x = "Video Category",
+       y = "Dislikes/View", caption = "Made by Enlik")
+
 ### End of Exercise
 ```
 
@@ -482,7 +489,7 @@ Notice for example that among the top 20 most disliked trending videos, **Daily 
 I hope it's obvious here that while we used `coord_flip()` to attain a plot resembling a dot plot, we can apply the `coord_flip` function on any other geoms, and such flexbility clearly has much to offer when the data we want to visualize is relatively large, making the right arrangement of the plot's element especially important. Let's see an example below:
 ```{r}
 ggplot(vids.u[vids.u$ratings_disabled == F, ], aes(x=category_id, y=likes/views))+
-  geom_boxplot(show.legend = F, color="goldenrod4")+
+  geom_boxplot(aes(col = category_id), show.legend = F)+
   coord_flip()
 ```
 
