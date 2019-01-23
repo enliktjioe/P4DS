@@ -580,8 +580,33 @@ The following is one way to compare the sentiments. There is nothing new in the 
 ggplot(vids.logan, aes(x=trending_date, y=sentiment, color=title))+
   geom_point(aes(size=views))+
   guides(size=F)+
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom") +
+  scale_y_continuous(breaks = seq(0,800,100))
 ```
+
+Channel INSIDER
+Title dan Jumlah Views Channel INSIDER
+
+
+```{r}
+# vids.insider <- melt(vids.u[vids.u$title], vids.u[vids.u$views])
+# 
+# vids.hate <- melt(vids.u[vids.u$dislikes >= vids.u$likes & vids.u$ratings_disabled == F, c(4,7,8,9)])
+#temp3 <- temp3[order(temp3$dislikeratio, decreasing = T), ]
+
+vids.insider <- vids.u[vids.u$channel_title == "INSIDER", ]
+#vids.insider <- vids.insider[order(vids.insider$views, decreasing = T), ]
+head(vids.insider)  
+
+ggplot(vids.insider, aes(x=reorder(title, views), y= views))+
+  geom_col() +
+  coord_flip() +
+  labs(title = "Jumlah Views Channel INSIDER", x = "Title", y = "Jumlah Views")
+```
+
+
+
+
 Observe that we're using the size to represent views, but that wasn't very obvious to our readers. We can add a legend or accompanying annotation to explain that, but as we'll see in the coming exercises there are better way to represent these data.  
 
 While the y-axis still represents the sentiment, we will add a layer of `geom_label` to label the movie names instead. A similar function would have been `geom_text` but since we're practically labelling our points, I've opted for the `geom_label` instead. Here, we're looking at the trending videos from Universal Pictures during that period. 
