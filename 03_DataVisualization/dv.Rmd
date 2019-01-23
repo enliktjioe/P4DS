@@ -596,9 +596,10 @@ Title dan Jumlah Views Channel INSIDER
 
 vids.insider <- vids.u[vids.u$channel_title == "INSIDER", ]
 #vids.insider <- vids.insider[order(vids.insider$views, decreasing = T), ]
-head(vids.insider)  
+vids.insider$title <- reorder(vids.insider$title, vids.insider$views)
+head(vids.insider)
 
-ggplot(vids.insider, aes(x=reorder(title, views), y= views))+
+ggplot(vids.insider, aes(x=title, y= views))+
   geom_col() +
   coord_flip() +
   labs(title = "Jumlah Views Channel INSIDER", x = "Title", y = "Jumlah Views")
