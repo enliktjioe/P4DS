@@ -1,0 +1,130 @@
+---
+title: "Algoritma_DV_LBB"
+author: "Enlik Tjioe"
+date: "24 January 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Libraries
+```{r}
+# Main Library
+library(ggplot2)
+
+# Text Mining Library
+library("tm") # for text mining
+library("SnowballC") # for text stemming
+library("wordcloud") # word-cloud generator 
+library("RColorBrewer") # color palettes
+```
+
+## 2. Kaggle Dataset
+[TMBD 5000 Movie Dataset](https://www.kaggle.com/tmdb/tmdb-movie-metadata)
+
+
+## 3. Pre-Processing Data
+Workflow:
+
+* Reading your data
+* Take a peek at your data
+* Inspect your structure of data
+* Formulate questions (strategic business value)
+* Answer questions efficiently
+
+Getting Data (csv) -> preprocessing -> eda (exploratory data analysis) -> data visualization using ggplot2
+
+**Formulate question**
+What is the **most used word** used for movie title?
+
+### 3.1 Pre-processing (subset 'title' from movie data frame)
+`mv` is a dataframe with 4803 observations and 20 variables
+```{r}
+mv <- read.csv("data_input/tmdb_5000_movies.csv", stringsAsFactors = FALSE)
+# str(mv)
+
+title <- mv[,c("title")]
+head(title, n = 10)
+
+rm(mv) # remove unused mv data frame to save memory
+
+```
+
+
+### 3.2 Exploratory Data Analysis
+Load the data as a corpus
+```{r}
+docs <- Corpus(VectorSource(title))
+docs
+```
+
+Inspect the content of the document
+```{r}
+# inspect(docs)
+```
+ 
+
+#### 3.2.1 Text transformation
+Transformation is performed using tm_map() function to replace, for example, special characters from the text.
+
+Replacing `:` and `-` with empty character:
+```{r}
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, "", x))
+docs <- tm_map(docs, toSpace, ":")
+docs <- tm_map(docs, toSpace, "-")
+```
+#### 3.2.2 Cleaning the Text
+```{r}
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove 'the' common stopwords
+docs <- tm_map(docs, removeWords, c("the", "at", "of", "on", 
+                                    "and", "vs", "an"))
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+```
+
+#### 3.2.3 Build a term-document matrix
+Document matrix is a table containing the frequency of the words. Column names are words and row names are documents. The function `TermDocumentMatrix()` from text mining package can be used as follow :
+
+```{r}
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+head(d, 20)
+```
+
+
+### 4. Visualization - Word Cloud + ggplot2
+```{r}
+wordcloud(words = d$word, freq = d$freq, min.freq = 1,
+          max.words=50, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+top20 <- head(d, 20)
+top20$word <- reorder(top20$word, top20$freq)
+
+ggplot(top20, aes(x = word, y = freq)) +
+  geom_col(position = "dodge", aes(fill = freq)) + 
+  coord_flip() +
+  labs(title = "Top 20 Most Used Words in Movie Title", x = "Word", y = "Word Count")
+```
+
+## 5. Final Thoughts
+
+What I Learn?
+
+* Pre-processing data by subsetting *title* column from movie dataframe
+* Text Mining step by step process using tm library
+* Formating revenue numeric values into **Billion(B)** format
+* Data visualization with ggplot2 using `geom_col()` + `coord_flip()` + `labs()`
+
+## References
+[sthda.com](http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know)
