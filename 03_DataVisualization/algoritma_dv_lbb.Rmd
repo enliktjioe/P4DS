@@ -1,5 +1,5 @@
 ---
-title: "Algoritma_DV_LBB"
+title: "wordcloud and ggplot2"
 author: "Enlik Tjioe"
 date: "24 January 2019"
 output: html_document
@@ -120,13 +120,23 @@ ggplot(top20, aes(x = word, y = freq, fill = word, label = freq)) +
 ```
 
 ## 5. Final Thoughts
+The most used words in Movie Title was **man**
+
+Top 5 words
+
+1. man
+2. love
+3. with
+4. movie
+5. you
 
 What I Learn?
 
 * Pre-processing data by subsetting *title* column from movie dataframe
-* Text Mining step by step process using tm library
-* Formating revenue numeric values into **Billion(B)** format
-* Data visualization with ggplot2 using `geom_col()` + `coord_flip()` + `labs()`
+* Text Mining step by step process using `tm` library
+* Word Cloud Visualization using `wordcloud` library
+* Data visualization with ggplot2 using `geom_col()` + `coord_flip()` + `labs()` + `geom_label()`
 
 ## References
 [sthda.com](http://www.sthda.com/english/wiki/text-mining-and-word-cloud-fundamentals-in-r-5-simple-steps-you-should-know)
+[rpubs.com](https://rpubs.com/sf47/170076)
