@@ -108,13 +108,15 @@ wordcloud(words = d$word, freq = d$freq, min.freq = 1,
           max.words=50, random.order=FALSE, rot.per=0.35, 
           colors=brewer.pal(8, "Dark2"))
 
+# re-ordering word based on frequency
 top20 <- head(d, 20)
 top20$word <- reorder(top20$word, top20$freq)
 
-ggplot(top20, aes(x = word, y = freq)) +
-  geom_col(position = "dodge", aes(fill = freq)) + 
+ggplot(top20, aes(x = word, y = freq, fill = word, label = freq)) +
+  geom_bar(stat="identity", show.legend = FALSE) +
   coord_flip() +
-  labs(title = "Top 20 Most Used Words in Movie Title", x = "Word", y = "Word Count")
+  labs(title = "Top 20 Most Used Words in Movie Title", x = "Word", y = "Word Count") +
+  geom_label(aes(fill = word),colour = "white", fontface = "bold", show.legend = FALSE)
 ```
 
 ## 5. Final Thoughts
