@@ -1,5 +1,5 @@
 ---
-title: "20 Years of Video Games"
+title: "20 Years of Video Games 1996-2016"
 author: "Enlik Tjioe"
 date: "27 January 2019"
 output: html_document
@@ -9,5 +9,131 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## 1. Library
+```{r}
+library(ggplot2)
+```
 
+
+## 2. Kaggle Dataset
+[20 Years of Games](https://www.kaggle.com/egrinstein/20-years-of-games)
+
+## 3. Background
+In this data analysis, I will focusing to three big names in console game industry. They are Nintendo, Sony, and Microsoft. I will try to visualize who exactly win the **Console Wars** during 20 years timeline between 1996-2016
+
+## 4. Pre-processing
+```{r}
+ign <- read.csv("data_input/ign.csv", stringsAsFactors = FALSE)
+#str(ign)
+
+ign[, c("score_phrase", "platform", "genre", "editors_choice")] <- lapply(ign[, c("score_phrase", "platform", "genre", "editors_choice")] , as.factor)
+
+ign20 <- ign[ign$release_year >= 1996 & ign$release_year <= 2016, ]
+
+## save memory by removing unused data frame
+rm(ign)
+```
+
+
+## 5. Data Preparation
+I define new variables for only 3 big console game vendor:
+Nintendo, Sony, and Microsoft
+
+```{r}
+nintendo <- c("Game Boy","Game Boy Advance","Game Boy Color" ,"GameCube", "NES", "New Nintendo 3DS" ,"Nintendo 3DS","Nintendo 64", "Nintendo 64DD","Nintendo DS", "Nintendo DSi","Super NES","Wii","Wii U")
+
+sony <- c("PlayStation","PlayStation 2","PlayStation 3","PlayStation 4" ,"PlayStation Portable","PlayStation Vita")
+
+microsoft <- c("Xbox","Xbox 360","Xbox One")
+
+# Function to create new console platform
+consolePlatform <- function(x) {
+  if (x %in% nintendo == TRUE){
+    return("Nintendo")
+  }
+  
+  else if(x %in% sony == TRUE){
+    return("Sony")  
+  }
+  
+  else if(x %in% microsoft == TRUE){
+    return("Microsoft")
+  }
+  
+  else{
+    return("Others")
+  }
+  
+}
+
+ign20$consolePlatform <- sapply(ign20$platform, consolePlatform)
+table(ign20$consolePlatform)
+```
+Sony won total released game on their platform with total 5059
+Nintendo in 2nd position with 4907 total games
+and Microsoft in 3rd position with 2659 total games
+
+## 6. Data Visualization
+### 6.1 Nintendo 1996-2016
+```{r}
+ggplot(ign20[ign20$consolePlatform=="Nintendo",],aes(x=factor(release_year))) +
+  geom_bar(aes(fill=platform)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(title = "Total game were released every year in Nintendo console", x = "Release Year", y = "Total Game")
+
+summary(ign20[ign20$consolePlatform=="Nintendo",])
+```
+Nintendo was the most senior game company compare to Sony and Microsoft.
+Nintendo has the worst year during 1996-1998, because Sony almost take down all the console game marketshare with their premiere platform.
+With the release of Wii, Nintendo is rising again with their most innovative game console
+Unfortunately, the Wii successor, Wii U, didn't work well as its predecessor, and make Nintendo has the worst year again during 2014-2016.
+
+
+### 6.2 Sony 1996-2016
+```{r}
+ggplot(ign20[ign20$consolePlatform=="Sony",],aes(x=factor(release_year))) +
+  geom_bar(aes(fill=platform)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(title = "Total game were released every year in Sony console", x = "Release Year", y = "Total Game")
+
+summary(ign20[ign20$consolePlatform=="Sony",])
+```
+Sony has been active in console game industry since 1996 with the release of phenomenal PlayStation 1.
+Until 2016, PlaySation 2 still the most popular console game for game release.
+
+
+## 6.3 Microsoft 1996-2016
+```{r}
+ggplot(ign20[ign20$consolePlatform=="Microsoft",],aes(x=factor(release_year))) +
+  geom_bar(aes(fill=platform)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(title = "Total game were released every year in Microsoft console", x = "Release Year", y = "Total Game")
+
+summary(ign20[ign20$consolePlatform=="Microsoft",])
+```
+We can see that Microsoft doesn't have any game released before 2001, that was because the first Microsoft game console, Xbox, was release on 2001. That means Bill Gates own-company doesn't compete with Nintendo and Sony before that time.
+
+Xbox 360 was the most popular Microsoft game platform
+
+## 6.4 Console Wars
+What is the most popular console during 1996-2016
+```{r}
+ggplot(ign20[ign20$consolePlatform != "Others",],aes(x=factor(release_year))) +
+  geom_bar(aes(fill=consolePlatform)) +
+  theme(axis.text.x = element_text(angle=90, hjust=1)) +
+  labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
+```
+
+
+## 7. Final Thoughts
+Sony wins the 20-years **Console Wars** based on their consistency in game release every year, with more than 5000 game title released on their platform from 1996-2016.
+
+
+## 8. What do I learn?
+* Pre-processing data by subsetting date based on **release_year** column from ign dataframe
+* Data preparation by creating new variable **consolePlatform** using 3 big console game vendor: Nintendo, Sony, and Microsoft
+* Data visualization with ggplot2 using `geom_bar()` + `theme()` + `labs()`
+* Analyze 20 years **Console Wars** with timeframe 1996-2016
+
+## References
+[kaggle.com](https://www.kaggle.com/jonathanbouchet/ign-data-20-years-of-vg)
