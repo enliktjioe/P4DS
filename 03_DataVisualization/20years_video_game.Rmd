@@ -118,10 +118,14 @@ Xbox 360 was the most popular Microsoft game platform
 ## 6.4 Console Wars
 What is the most popular console during 1996-2016
 ```{r}
-ggplot(ign20[ign20$consolePlatform != "Others",],aes(x=factor(release_year))) +
+a <- ggplot(ign20[ign20$consolePlatform != "Others",],aes(x=factor(release_year))) +
   geom_bar(aes(fill=consolePlatform)) +
   theme(axis.text.x = element_text(angle=90, hjust=1)) +
   labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
+
+library(plotly)
+ggplotly(a)
+
 ```
 
 
