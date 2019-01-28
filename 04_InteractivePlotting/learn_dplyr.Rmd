@@ -1,0 +1,58 @@
+---
+title: "Learn dplyr"
+author: "Enlik Tjioe"
+date: "28 January 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Library
+```{r}
+library(dplyr)
+library(plotly)
+```
+
+## Read Data
+```{r}
+vids <- read.csv("youtubetrends.csv")
+str(vids)
+```
+
+
+## 1. select
+select based on column(s)
+```{r}
+vids.latihan <- select(vids, title, likes, dislikes, views)
+head(vids.latihan)
+```
+
+
+## 2. filter
+select based on row(s)
+```{r}
+vids.filter <- filter(vids.filter, likes = 10000 | dislikes = 5000)
+
+vids.latihan <- filter(vids.latihan, views > 1000000 & dislikes < 100)
+head(vids.latihan)
+```
+
+## 3. pipes (%>%)
+make life easier
+shortcut = CMD + SHIFT + M (Mac) or CTRL + SHIFT + M (Windows)
+```{r}
+vids.dplyr <- vids %>% 
+                select(title, likes, views) %>% 
+                filter(likes > 5000)
+
+head(vids.dplyr)
+```
+
+## 4. mutate
+make a new variable
+```{r}
+
+```
+
