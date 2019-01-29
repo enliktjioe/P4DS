@@ -1,0 +1,640 @@
+---
+title: "Algoritma Academy: Interactive Plotting"
+author: "Samuel Chan"
+date: "Updated: June 29, 2018"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: 
+        collapsed: false
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    css: style.css
+  fig_caption: yes
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
+---
+
+
+# Background {.tabset}
+## Algoritma
+The following coursebook is produced by the team at [Algoritma](https://algorit.ma) for its Data Science Academy workshops. No part of this coursebook may be reproduced in any form without permission in writing from the authors.
+
+Algoritma is a data science education center based in Jakarta. We organize workshops and training programs to help working professionals and students gain mastery in various data science sub-fields: data visualization, machine learning, data modeling, statistical inference etc. Visit our website for all upcoming workshops.
+
+## Libraries and Setup
+We'll set-up caching for this notebook given how computationally expensive some of the code we will write can get.
+```{r setup}
+#knitr::opts_chunk$set(cache=TRUE)
+options(scipen = 9999)
+rm(list=ls())
+```
+
+You will need to use `install.packages()` to install any packages that are not already downloaded onto your machine. You then load the package into your workspace using the `library()` function:
+```{r}
+#install.packages("plotly")
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+library(reshape2)
+```
+
+
+Day 1 
+
+1. dplyr
+
+```{r}
+library(dplyr)
+library(plotly)
+
+vids <- read.csv("youtubetrends.csv")
+str(vids)
+
+```
+
+1.1 select
+mengambil variabel yang kita inginkan
+```{r}
+vids.old <- vids[,c("likes", "dislikes","title")]
+vids.dplyr <- select(vids,likes, dislikes, title)
+vids.dplyr <- select(vids, likes, dislikes, title)
+
+# select title, likes, dislikes, views
+#dari vids dan simpan pada vids.latihan
+vids.latihan <- select(vids, title, likes, dislikes, views)
+head(vids.latihan)
+
+```
+
+
+1.2 filter
+mengambil baris dengan kondisi yang diinginkan
+```{r}
+vids.old <- vids.old[vids.old$likes>10000 & vids.old$dislikes<5000, ]
+head(vids.old)
+
+vids.dplyr <- filter(vids.dplyr, likes>10000 | dislikes<5000)
+head(vids.dplyr)
+
+
+# dari vids.latihan filter views lebih dari 1 juta dan dislikes kurang dari 100
+
+
+vids.latihan <- filter(vids.latihan, views>1000000, dislikes<100 | likes >5000)
+head(vids.latihan)
+
+
+
+
+```
+
+1.3 pipes
+mempermudah hidup
+```{r}
+vids.latihan <- vids %>% 
+  select(title, views, likes, dislikes) %>% 
+  filter(views>1000000, dislikes<100)
+
+
+prop.table(table(vids$category_id))
+
+vids$category_id %>% 
+  table() %>% 
+  prop.table()
+
+# latihan
+
+vids.dplyr
+# select variable title, likes, views lalu filter dengan kondisi likes>5000 dari data vids
+
+vids.dplyr <- vids %>% 
+  select(title, likes, views) %>% 
+  filter(likes>5000)
+
+head(vids.dplyr)
+
+```
+
+
+1.4 mutate
+membuat variable baru
+```{r}
+vids.dplyr$likesratio <- vids.dplyr$likes/vids.dplyr$views
+  
+vids %>% 
+  mutate(likesratio = likes/views,
+         dislikesratio = dislikes/views)
+  
+  
+
+
+# buat variabel viral pada vids yang berisi likes+ dislikes + views 
+vids <- vids %>% 
+  mutate(viral = likes+ dislikes+ views,
+         title = as.character(title))
+
+```
+
+
+1.5 group_by
+untuk mengelompokan data berdasarkan kondisi group nya. 
+```{r}
+
+vids %>%
+  filter(likes==max(likes))
+
+
+vids %>% 
+  group_by(category_id) %>% 
+  filter(likes==max(likes))
+
+
+vids %>% 
+  group_by(category_id) %>% 
+  mutate(likesratio = likes/views)
+
+
+
+
+vids %>% 
+  group_by(category_id) %>% 
+  mutate(likesratio = mean(likes) /views) %>% 
+  arrange(category_id) %>% 
+  select(category_id, likesratio)
+
+
+
+vids %>% 
+  group_by(category_id) %>% 
+  mutate( likessum = likes/ sum(likes)) %>% 
+  select(category_id, likessum) %>% 
+  arrange(category_id) %>% 
+  filter(category_id == "Autos and Vehicles") %>% 
+  arrange(desc(likessum))
+ 
+# mean likes dari auto = 17
+# video 1 views = 100
+# vdeo 2 views = 150
+# 
+# 17/100
+# 17/150
+
+```
+
+1.6 summarise
+```{r}
+
+
+
+vids.n <- vids %>% 
+  group_by(category_id) %>% 
+  summarise(likesratio = sum(likes)/sum(views)) %>% 
+  arrange(desc(likesratio), category_id)
+  
+vids.n
+str(vids)
+  
+```
+
+
+1.7 arrange
+```{r}
+vids %>% 
+  arrange(desc(likes))
+```
+
+
+1.8 latihan
+
+dari data vids ambil variabel title, category_id, views, likes, dislikes, dan comment_count
+dengan kondisi views > 500rb dan likes >1000
+lalu buat sebuah variabel baru yang bernama viral yang berisi jumlah (likes+ dislikes)/ views
+dan urutkan berdasarkan nilai viral paling tiggi dan simpan dalam vids.kuis
+
+```{r jawaban}
+vids.kuis <- vids %>% 
+  select(title, category_id, views, likes, dislikes, comment_count) %>% 
+  filter(views>500000 , likes > 1000) %>% 
+  mutate(viral = (likes+ dislikes)/ views) %>% 
+  arrange(desc(viral))
+head(vids.kuis)
+```
+
+
+
+2. plotly
+
+algoritma theme
+```{r}
+
+theme_algoritma <- theme(legend.key = element_rect(fill="black"),
+           legend.background = element_rect(color="white", fill="#263238"),
+           plot.subtitle = element_text(size=6, color="white"),
+           panel.background = element_rect(fill="#dddddd"),
+           panel.border = element_rect(fill=NA),
+           panel.grid.minor.x = element_blank(),
+           panel.grid.major.x = element_blank(),
+           panel.grid.major.y = element_line(color="darkgrey", linetype=2),
+           panel.grid.minor.y = element_blank(),
+           plot.background = element_rect(fill="#263238"),
+           text = element_text(color="white"),
+           axis.text = element_text(color="white")
+           
+           )
+
+```
+
+
+plot 1
+
+```{r}
+
+
+v.favor <- vids %>% 
+  group_by(category_id) %>%
+  summarise(likeratio = mean(likes/views), 
+            dlikeratio = mean(dislikes/views)
+            ) %>%
+  mutate(favor = likeratio/dlikeratio)
+
+v.favor
+```
+
+```{r}
+library(plotly)
+
+colp <- ggplot(v.favor, aes(x= reorder(category_id, favor) , y=favor))+
+  geom_col(aes(fill= category_id))+
+  coord_flip()+
+  labs(title="Favorability Index by Video Category, 2018",
+       col = "Jenis kategori")+
+  theme_algoritma
+colp
+
+ggplotly(colp)
+
+```
+
+plot 2
+
+dplyr %>% ggplot
+```{r}
+plotratio <- vids %>% 
+  mutate(likesratio = likes/views,
+         dislikesratio = dislikes/views) %>% 
+  filter(category_id=="Comedy") %>% 
+  ggplot(aes(x = likesratio, y = dislikesratio))+
+  geom_point(aes(size=views), alpha=0.5, show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma 
+ 
+plotratio
+
+
+```
+
+plot 3
+```{r}
+
+el <- as.data.frame(economics_long[,1:3])
+econp <- ggplot(el, aes(date, value, group=variable)) + 
+  geom_line()+
+  facet_grid(variable ~ ., scale = "free_y")+
+  labs(title="US Economic time series")+
+  theme_algoritma
+econp
+```
+
+
+```{r}
+rangeslider(ggplotly(econp))
+```
+
+
+1. dplyr
+- select() untuk mengambil variabel yang kita inginkan
+- filter() untuk mengambil baris yang kita inginkan
+- mutate() untuk membuat variabel baru
+- group_by() untuk mengelompokan data berdasarkan kategory yang kita inginkan
+- summarise() untuk merangkum data yang sudah di group_by
+- arrange() untuk mengurutkan data
+--des()
+%>% untuk mempermudah menggunakan dplyr
+
+2. plotly
+ggplotly() untuk membuat objek ggplot menjadi interaktif
+rangeslider() untuk membuat slider pada plot time series
+
+end day 2
+
+3. ggpubr
+4. flexdashboard
+
+
+
+# Interactive Visualization
+As data grow in complexity and size, often times the designer is tasked with the difficult task of balancing overarching storytelling with specificity in their narrative. The designer is also tasked with striking a fine balance between coverage and details under the all-too-real constraints of static graphs and plots. 
+
+Interactive visualization is a mean of overcoming these constraints, and as we'll see later, quite a successful one at that. Quoting from the author of `superheat` Rebecca Barter, "Interactivity allows the viewer to engage with your data in ways impossible by static graphs. With an interactive plot, viewers can zoom into areas they care about, highlight data points that are relevant to them and hide the information that isn't."
+
+More than just interactive visualization, we'll also learn in this 3-day workshop how to make full-fledged interactive documents, interactive dashboards, and as a bonus, how to create multi-paged PDF documents with the ideal layout of our plots.
+
+I'll start by introducing plotly.
+
+# Plotly
+Plotly is an interactive, browser-based graphing library that helps data analysts create interactive, high-quality graphs in one of the many supported languages. 
+
+Building on what we've learned in our last workshop, we'll learn how to add some nice enhancements and interactivity to our plots using plotly. This works entirelly locally and through the HTML widgets framework, allowing you to create interactive plots directly within RStudio. 
+
+We'll read our data in and perform the (hopefully by now) standard preprocessing procedure:
+```{r}
+vids <- read.csv("youtubetrends.csv")
+vids$likesratio <- vids$likes/vids$views
+vids$dislikesratio <- vids$dislikes/vids$views
+```
+
+Recall that our videos can take one of the 16 possible video categories. We've primarily been working with the News and Media category in our last workshop, so for a change of scenery we'll be using the videos in the `Comedy` category for most of our examples.  
+```{r}
+table(vids$category_id)
+```
+
+Also recalled how we created our custom theme together in the last workshop using `theme`. Because you're studying at Algoritma, we'll save our theme as `theme_algoritma`:
+```{r}
+theme_algoritma <- theme(legend.key = element_rect(fill="black"),
+           legend.background = element_rect(color="white", fill="#263238"),
+           plot.subtitle = element_text(size=6, color="white"),
+           panel.background = element_rect(fill="#dddddd"),
+           panel.border = element_rect(fill=NA),
+           panel.grid.minor.x = element_blank(),
+           panel.grid.major.x = element_blank(),
+           panel.grid.major.y = element_line(color="darkgrey", linetype=2),
+           panel.grid.minor.y = element_blank(),
+           plot.background = element_rect(fill="#263238"),
+           text = element_text(color="white"),
+           axis.text = element_text(color="white")
+           
+           )
+```
+
+Try and spend a couple of minutes on the code above and fully understand what each line does. This should not be too foreign to you by now! We'll apply this theme a lot in subsequent `ggplot` graphics and feel free to revisit this chunk and make any aesthetic adjustments to your liking. 
+
+In the past, we've relied on R's base functionality for data preparation, I want to show you a technique that may greatly increase your productivity when working with R. This technique is developed as "a grammar of data manipulation", and works by providing a consistent set of "verbs" that help you solve the most common data manipulation challenges:  
+- `mutate()` adds new variable  
+```{r}
+vids <- mutate(vids, likeability = likes/dislikes)
+```
+
+- `select()` keeps only the variables we mentioned  
+```{r eval=F}
+channels <- select(vids, c(channel_title, category_id))
+```
+
+- `filter()` returns only the rows based on conditions
+```{r}
+filter(vids, views>=25000000)
+```
+
+- `summarise()` returns a summary statistics (min, length, mean etc)
+
+Each of these verbs also work with `group_by()` which allows us to perform any operation "by group". I've attached a full copy of the `dplyr` cheatsheet in your directory. 
+![](dplyr.png)
+
+A common operation with `dplyr` is to use `group_by` and `summarise` to get a new summary dataframe. This combines nicely with any additional verbs we add to it, through chaining (`%>%`). Sounds a little abstract, so let's dive into an example:
+```{r}
+library(dplyr)
+v.favor <- vids %>% 
+  group_by(category_id) %>%
+  summarise(likeratio = mean(likes/views), 
+            dlikeratio = mean(dislikes/views)
+            ) %>%
+  mutate(favor = likeratio/dlikeratio)
+
+v.favor
+```
+
+Now using the `v.favor` dataframe we created and the `theme_algoritma` we wrote in our last workshop, let's build a `ggplot`:
+```{r}
+colp <- ggplot(v.favor, aes(x=category_id, y=favor))+
+  geom_col(fill="dodgerblue4")+
+  coord_flip()+
+  labs(title="Favorability Index by Video Category, 2018")+
+  theme_algoritma
+colp
+```
+A simple but pleasant looking bar plot. Adding interactivity using `plotly` is as simple as wrapping our `ggplot` object into the `ggplotly` function:
+```{r}
+ggplotly(colp)
+```
+
+If you hover your mouse over, notice the tool tip that shows you the value of our "favorability" index by each category. 
+
+> Updated (29 June): If `ggplotly` glitches out or return an incorrect-looking plot, try and install `ggplot2` from Hadley's github repo using `devtools::install_github('hadley/ggplot2')` and restart your R session
+
+Let's see another example of using the `dplyr` grammar. Supposed we like to create a summary table that counts the number of appearance each "Comedy" channel has made in that period of trending videos, we could have written the following:
+```{r}
+comedy <- vids[vids$category_id == "Comedy", ]
+comedy <- aggregate(trending_date ~ channel_title, comedy, length)
+comedy <- comedy[order(comedy$trending_date, decreasing=T), ]
+names(comedy) <- c("channel_title", "count")
+head(comedy)
+```
+
+**Quiz 1: Using `dplyr`**  
+
+Could we have done it easier with `dplyr`? Refer back to the earlier code chunk and the cheatsheet in your folder to see if you can rewrite the code in `dplyr`. 
+
+From this point on, I'll leave the creative decision up to you - write R whichever way you prefer! For the most part, to keep the course materials relatively beginner-friendly I'll use the base R method but where it greatly simplify things, I'll use `dplyr` in future courses and will expect you to understand them.
+
+Now let's create a second `ggplot` object, I'll name it `hexp`:
+```{r}
+hexp <- ggplot(vids[vids$category_id == "Comedy",], aes(x=likesratio, y=dislikesratio))+
+  geom_point(aes(size=views), alpha=0.5, show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma
+hexp
+```
+
+Wrapping `hexp` in our `ggplotly()` function yields an interactive HTML widget:
+```{r}
+ggplotly(hexp)
+```
+
+Plotly works with time series data as well. To show you an illustration of this, I'll read the `economics` dataset that ships with ggplot. `economics_long` is a US economic time series and I'll use the first three columns of it:
+```{r}
+el <- as.data.frame(economics_long[,1:3])
+```
+
+Creating a `facet_grid` ggplot object with varying y-scales on each of the grid:
+```{r}
+econp <- ggplot(el, aes(date, value, group=variable)) + 
+  geom_line()+
+  facet_grid(variable ~ ., scale = "free_y")+
+  labs(title="US Economic time series")+
+  theme_algoritma
+econp
+```
+
+Creating our `ggplotly` object to add interactivity in our plots:
+```{r}
+ggplotly(econp)
+```
+
+Because it is a plotly object, you can also use supporting plotly functions such as `rangeslider()` to add a range slider to the x-axis.
+```{r}
+rangeslider(ggplotly(econp))
+```
+
+Now let's take it further with our plotly experimentation. First, we'll create a long format data frame containing videos that have comment enabled:
+
+```{r}
+vids.m <- vids[vids$comments_disabled == F,c(4,7,8,9)]
+# 4,8,7,9 pointing to category_id, likes, dislikes, comment_count
+vids.m <- melt(vids.m)
+```
+
+As we create our `ggplot`, then wrap it in `ggplotly()` as we've been doing above:
+```{r}
+cplot <- ggplot(vids.m, aes(x=category_id, y=value))+
+  # position can also be stack
+  geom_col(position="dodge", aes(fill=vids.m$variable))+
+  coord_flip()
+ggplotly(cplot)
+```
+
+**Quiz 2: Hands-on Plotly**
+Observe the many different functionalities of plotly by playing around with the icon bar in the widget. Try and do each of the following at least once:
+- Switch from "Show closest data on hover" to "Compare data on hover"  
+- Toggle Spike Lines  
+- Click on Legend items to toggle visibility  
+
+As a bonus exercise, try and create your own unique `plotly` starting from the raw data (`vids`). You are free to use any subsetting and pick any plot type - but the end result have to be a plotly object created using the `ggplotly()` function. When you're done, we'll move onto the next chapter! 
+
+# Publication and Layout Options
+We'll now going to create a multi-page PDF containing all the plots we've created so far. To give our publication a consistent style, let's apply our `theme_algoritma` to the last plot we created:
+
+```{r}
+cplot <- cplot + theme_algoritma
+cplot
+```
+
+Through the `ggpubr` package, we'll use the `ggarrange` to put the 4 plots we created in earlier steps together into a list. Because we specify `nrow=2`, we imagine that the resulting would be a list of 2 objects, each containing 2 rows (one for each plot):
+```{r}
+publicat <- ggarrange(hexp, econp, cplot, colp, nrow=2)
+```
+
+Let's take a look at the first item on our `publicat` list:
+```{r}
+publicat[[1]]
+```
+
+As well as the second:
+```{r}
+publicat[[2]]
+```
+
+Once we're happy with the result, we can use `ggexport()` and specify a file name. This will export the list as a multi-page PDF:
+```{r}
+ggexport(publicat, filename="publication.pdf")
+```
+
+To visualize interactively, just print `publicat` from your console or document.
+
+Similar to `ggarrange()`, plotly allow us to put different plots together into one `plotly` object using the `subplot()` function. In this plot, there are 4 subplots, and interacting with any one of them will cause the other subplots to react accordingly to your input:
+```{r eval=F}
+subplot(
+  cplot,
+  hexp, 
+  colp,
+  econp,
+  nrows=4)
+```
+
+To see another example, I'm going to go ahead and create 4 ggplots:
+```{r}
+hexp <- ggplot(vids[vids$category_id == "Comedy",], aes(x=likesratio, y=dislikesratio))+
+  geom_point(aes(size=views), alpha=0.5, show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma
+hexp
+```
+
+```{r}
+hexp2 <- ggplot(vids[vids$category_id == "Comedy",], aes(x=likesratio, y=dislikesratio))+
+  geom_hex(alpha=0.6, show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma
+hexp2
+```
+
+```{r}
+hexp3 <- ggplot(vids[vids$category_id == "Comedy",], aes(x=likesratio, y=dislikesratio))+
+  geom_line(col="black", show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma
+hexp3
+```
+
+```{r}
+hexp4 <- ggplot(vids[vids$category_id == "Comedy",], aes(x=likesratio, y=dislikesratio))+
+  geom_bin2d(show.legend=F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma
+hexp4
+```
+
+And use `subplot()` to arrange them together into one plotly widget with the specified widths. 
+```{r}
+subplot(
+hexp, hexp2, hexp3, hexp4,
+  nrows=2, shareX=T, shareY=T, widths=c(0.65, 0.35))
+```
+
+Note that as we use the interactive selection tools or zoom in on any part of the plot (either plot) the other plots will be refreshed accordingly - a pretty neat feature considering how simple it is to set it up! 
+
+Note that the common title automatically takes the last plot's title, so in this case the common (shared) title inherits from `hexp4`. As of its current development cycle, plotly does not support titles or any similar functionalities yet so adding a subplot title or even a mutual title is a bit hackerish (using `annotate()`[^1]) and beyond the scope of this coursebook. As and when this change in a future release / update, I will update this coursebook accordingly to include examples.
+
+# Flex Dashboard
+Flex Dashboard is an R package that "easily create flexible, attractive, interactive dashboards with R". Authoring and customization of dashboards is done using R Markdown with the `flexdashboard::flex_dashboard` output format. To get started, install **flexdashboard** using the standard installation process you should be familiar by now:  
+`install.packages(flexdashboard)`
+
+When that is done, create a new R Markdown document from within RStudio, choose "From Template" and then **Flex Dashboard** as following:
+![](flexscreen.png)
+
+The template code that was generated for you takes some default value - for example it chooses to have a `columns` orientation and set your layout to `fill`. 
+
+If you like your plots to change in height so as to fill the web page vertically, the `vertical_layout: fill` (default) setting should be kept. If you want the charts to maintain their original height instead, this makes it necessary to have page scrolling in order to accommodate all your plots. That can be done by setting `vertical_layout` to a scrolling layout using `scroll`. 
+
+Within each of the code chunk of the Rmd template code that was generated for you, you will find it common to enter:  
+- R graphical output (`plot()`, `ggplot()`)
+- Interactive JavaScript data visualization based on htmlwidgets (`plotly`)  
+- Tabular data (`table()`)  
+- Common summary data, text, values etc 
+
+# Summary
+Congratulations on getting started with making interactive plots using `plotly` and `flexdashboard` - in the remaining sessions of this workshop we'll look at creating an interactive document that allow the end user to interact with our creation and we'll publish our project onto the web in the learn-by-building module. 
+
+I hope you're starting to feel more accomplished from the earlier days when we are all learning the ropes in our first few session. As always, the secret to fluency is practice!
+
+Happy coding! 
+
+Samuel
+
+# Reference Answer
+```{r}
+comedy2 <- vids %>% 
+  filter(category_id == "Comedy") %>%
+  group_by(channel_title) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+```
+
+
+
+[^1]: [Giving subtitles for subplot using R](https://stackoverflow.com/questions/37285729/how-to-give-subtitles-for-subplot-in-plot-ly-using-r)
+
+
+
