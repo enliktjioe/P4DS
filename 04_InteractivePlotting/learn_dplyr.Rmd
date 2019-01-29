@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(dplyr)
 library(plotly)
+library(ggpubr)
+library(flexdashboard)
 ```
 
 ## Read Data
@@ -69,8 +71,10 @@ vids %>%
 Summarise the dataframe, usually used with group_by
 ```{r}
 vids %>%
-  group_by(category_id) %>% 
-  summarise(likesratio = sum(likes)/sum(views))
+  group_by(category_id, publish_when) %>% 
+  summarise(likesratio = sum(likes)/sum(views),
+            total = n()) %>% 
+  arrange(desc(total))
 ```
 
 ## 1.7 arrange
@@ -120,11 +124,83 @@ theme_algoritma <- theme(legend.key = element_rect(fill="black"),
 ```
 
 
+plot 1
+
+```{r}
+v.favor <- vids %>% 
+  group_by(category_id) %>%
+  summarise(likeratio = mean(likes/views), 
+            dlikeratio = mean(dislikes/views)
+            ) %>%
+  mutate(favor = likeratio/dlikeratio)
+
+v.favor
+
+```
 
 ```{r}
 # plotratio <- vids %>% 
 #   mutate(likesratio = likes/views)
   
-rangeslider()
+colp <- ggplot(v.favor, aes(x= reorder(category_id, favor) , y=favor))+
+  geom_col(aes(fill= category_id))+
+  coord_flip()+
+  labs(title="Favorability Index by Video Category, 2018",
+       col = "Jenis kategori")+
+  theme_algoritma
+colp
 ```
 
+
+plot 2
+
+dplyr %>% ggplot
+```{r}
+plotratio <- vids %>% 
+  mutate(likesratio = likes/views,
+         dislikesratio = dislikes/views) %>% 
+  filter(category_id=="Comedy") %>% 
+  ggplot(aes(x = likesratio, y = dislikesratio))+
+  geom_point(aes(size=views), alpha=0.5, show.legend = F)+
+  labs(title="Likes vs Dislikes in Trending Comedy Videos", subtitle="Visualizing likes vs dislikes in the Algoritma theme, source: YouTube")+
+  theme_algoritma 
+ 
+plotratio
+```
+
+plot 3
+```{r}
+el <- as.data.frame(economics_long[,1:3])
+econp <- ggplot(el, aes(date, value, group=variable)) + 
+  geom_line()+
+  facet_grid(variable ~ ., scale = "free_y")+
+  labs(title="US Economic time series")+
+  theme_algoritma
+econp
+```
+
+```{r}
+rangeslider(ggplotly(econp))
+
+```
+
+
+## 3. ggpubr
+ggplot for publication 
+```{r}
+publicat <- ggarrange(colp, plotratio, econp, nrow = 2)
+
+ggexport(publicat, filename = "publication.pdf")
+```
+
+```{r}
+subplot(colp, plotratio, econp, nrows = 3)
+```
+
+
+
+## 4. flex dashboard
+
+
+
+## 5. Publish Rmd to Rpubs

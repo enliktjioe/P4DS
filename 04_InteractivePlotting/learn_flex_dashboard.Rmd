@@ -1,0 +1,59 @@
+---
+title: "Learn Flex Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(lubridate)
+library(knitr)
+
+options(scipen = 9999) # Scientific number format
+rm(list=ls()) # delete semua variable dalam environment
+
+vids <- read.csv("youtubetrends.csv")
+vids.view <- vids %>% 
+  group_by(category_id) %>% 
+  summarise(nviews = sum(views),
+            nlikes = sum(likes),
+            ndislikes = sum(dislikes),
+            ncomment = sum(comment_count),
+            likesratio = nlikes / nviews,
+            dislikeratio = ndislikes / nviews)
+```
+
+Row {data-height=650}
+-----------------------------------------------------------------------
+
+### Chart A
+plot 1
+```{r}
+ggplot(vids.view, aes(x = reorder(category_id, nviews), y = nviews, fill = category_id)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  labs(title = "Jumlah Views setiap Kategori", x = "Sum of views", y = "Category")
+```
+
+### Chart B
+plot 2
+size = likesratio / dislikeratio
+```{r}
+ggplot(vids.view, aes(x = likesratio, y = dislikeratio, col = category_id)) +
+  geom_point(aes(size = likesratio / dislikeratio))
+```
+
+
+Row {data-height=350}
+-----------------------------------------------------------------------
+### Chart C
+
+```{r}
+kable(vids.view)
+```
+
