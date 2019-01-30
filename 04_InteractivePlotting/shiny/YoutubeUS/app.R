@@ -58,7 +58,8 @@ server <- function(input, output) {
     plot2 <- ggplot(data = vids.hour, aes(x = reorder(category_id, totalVideo),
                                           y = totalVideo)) +
       geom_col() +
-      coord_flip()
+      coord_flip() +
+      scale_y_continuous(limits = c(0,150))
     
     ggplotly(plot2)
   })
