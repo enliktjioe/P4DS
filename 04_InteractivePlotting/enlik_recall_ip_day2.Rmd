@@ -1,0 +1,120 @@
+---
+title: "Enlik_Recall_IP_Day2"
+author: "Enlik Tjioe"
+date: "30 January 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+options(scipen = 9999)
+rm(list=ls())
+
+library(flexdashboard)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(plotly)
+library(knitr)
+library(ggpubr)
+```
+
+```{r}
+vids <- read.csv("youtubetrends.csv")
+```
+
+Theme Algoritma
+```{r}
+theme_algoritma <- theme(legend.key = element_rect(fill="black"),
+           legend.background = element_rect(color="white", fill="#263238"),
+           plot.subtitle = element_text(size=6, color="white"),
+           panel.background = element_rect(fill="#dddddd"),
+           panel.border = element_rect(fill=NA),
+           panel.grid.minor.x = element_blank(),
+           panel.grid.major.x = element_blank(),
+           panel.grid.major.y = element_line(color="darkgrey", linetype=2),
+           panel.grid.minor.y = element_blank(),
+           plot.background = element_rect(fill="#263238"),
+           text = element_text(color="white"),
+           axis.text = element_text(color="white")
+           
+           )
+```
+
+
+
+```{r}
+vids.agg <- vids %>% 
+  group_by(category_id) %>% 
+  summarise(nlikes = sum(likes),
+            ndislikes = sum(dislikes),
+            ncomments = sum(comment_count),
+            nviews = sum(views),
+            likesratio = nlikes / nviews,
+            dislikesratio = ndislikes / nviews)
+
+head(vids.agg)
+```
+
+Buat plot 1 - likes per category
+```{r}
+plot1 <- ggplot(vids.agg, aes(x = reorder(category_id, nlikes), y = nlikes, fill = category_id)) +
+  geom_col(show.legend = FALSE) + 
+  coord_flip() +
+  labs(title = "Jumlah Likes per kategori", x = "Kategori", y = "Likes") + 
+  theme_algoritma +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ","))
+
+ggplotly(plot1)
+```
+
+
+plot 2
+dplyr %>% ggplot
+```{r}
+vids.comedy <- vids %>% 
+  mutate(likesratio = likes/views,
+         dislikesratio = dislikes/views) %>% 
+  filter(category_id == "Comedy")
+
+plot2 <- ggplot(vids.comedy, aes(likesratio, dislikesratio)) +
+  geom_point(aes(size = views), alpha = 0.5, show.legend = F) +
+  labs(title = "Likes vs Dislikes in Trending Comedy Videos", 
+       subtitle = "Visualizing likes vs dislikes in the Algoritma theme, source = Youtube") +
+  theme_algoritma
+
+plot2
+```
+
+
+plot 3
+US Economic Time Series
+```{r}
+#economics # this dataset comes from ggplot2 package
+el <- as.data.frame(economics_long[,1:3])
+el
+
+econp <- ggplot(el, aes(date, value, group = variable)) +
+  geom_line() +
+  facet_grid(variable ~ ., scales = "free_y") +
+  labs(title = "US Economic time series") +
+  theme_algoritma
+
+econp
+
+rangeslider(ggplotly(econp))
+```
+
+Beberapa fungsi tambahan untuk dipelajari
+`ggarrange()` ; `ggexport()` ; `subplot()`
+```{r}
+publicat <- ggarrange(plot1, plot2, econp, nrow=2)
+publicat[[1]]
+
+ggexport(publicat, filename = "test.pdf")
+
+subplot(plot1, plot2, econp,
+  nrows=2, shareX=T, shareY=T, widths=c(0.65, 0.35))
+```
+

@@ -1,0 +1,80 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(plotly)
+library(knitr)
+
+options(scipen = 9999)
+rm(list=ls())
+```
+
+```{r}
+vids <- read.csv("youtubetrends.csv")
+vids$trending_date <- ymd(vids$trending_date)
+
+vids.agg <- vids %>% 
+  group_by(category_id) %>% 
+  summarise(nviews = sum(views),
+            nlikes = sum(likes),
+            ndislikes = sum(dislikes),
+            ncomment = sum(comment_count),
+            likesratio = nlikes/nviews,
+            dislikesratio = ndislikes/nviews)
+```
+
+
+Row {data-heigh=750}
+-----------------------------------------------------------------------
+
+### plot views
+
+```{r}
+plot1 <- ggplot(vids.agg, aes(x = reorder(category_id, nviews), y = nviews, fill = nviews)) +
+  geom_col(aes(fill = category_id), show.legend = F) +
+  coord_flip() +
+  labs(title = "Jumlah Views per Kategori", y = "Sum of Views", x = "Category") +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",")) +
+  theme(legend.position = "none")
+
+plot1
+
+ggplotly(plot1)
+```
+
+### Trending Comedy Videos
+
+```{r}
+vids.comedy <- vids %>% 
+  mutate(likesratio = likes/views,
+         dislikesratio = dislikes/views) %>% 
+  filter(category_id == "Comedy")
+
+plot2 <- ggplot(vids.comedy, aes(likesratio, dislikesratio)) +
+  geom_point(aes(size = views), alpha = 0.5, show.legend = F) +
+  labs(title = "Likes vs Dislikes in Trending Comedy Videos", 
+       subtitle = "Visualizing likes vs dislikes in the Algoritma theme, source = Youtube")
+
+ggplotly(plot2)
+```
+
+
+Row {data-height=250}
+-----------------------------------------------------------------------
+
+
+### datasets
+
+```{r}
+kable(vids.agg)
+```
+

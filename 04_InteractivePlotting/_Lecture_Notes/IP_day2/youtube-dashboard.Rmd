@@ -1,0 +1,71 @@
+---
+title: "YouTube Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+library(plotly)
+library(knitr)
+
+options(scipen = 9999)
+rm(list=ls())
+
+vids <- read.csv("../../youtubetrends.csv")
+vids$trending_date <- ymd(vids$trending_date)
+vids.agg <- vids %>% 
+  group_by(category_id) %>% 
+  summarise(nviews = sum(views),
+            nlikes = sum(likes),
+            ndislikes = sum(dislikes),
+            ncomment = sum(comment_count),
+            likesratio = nlikes/nviews,
+            dislikesratio = ndislikes/nviews)
+```
+
+Row {data-height=750}
+-----------------------------------------------------------------------
+
+### plot views
+
+```{r}
+plot1 <- ggplot(data = vids.agg, aes(x =reorder(category_id, nviews) , y = nviews))+
+  geom_col(aes(fill= category_id), show.legend = F)+
+  coord_flip()+
+  labs(title = "Jumlah Views setiap Kategori",
+       y = "Sum of views",
+       x= "Category")+ theme(legend.position = "none")+
+  scale_y_continuous(labels=function(x) format(x, big.mark = "."))
+
+ggplotly(plot1)
+```
+
+
+
+### plot ratio
+
+```{r}
+plot2 <- ggplot(data = vids.agg, aes(x = likesratio , y = dislikesratio))+
+  geom_point(aes(size= likesratio/dislikesratio, col = category_id), show.legend = F)
+
+ggplotly(plot2)
+ 
+```
+
+
+Row {data-height=250}
+-----------------------------------------------------------------------
+
+
+
+### dataset
+
+```{r}
+knitr::kable(vids.agg)
+```
