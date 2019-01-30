@@ -1,0 +1,26 @@
+---
+title: "Day 3 - Interactive Plotting - Shiny Web Apps"
+author: "Enlik Tjioe"
+date: "30 January 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Agenda hari ke-3
+1. Konsep dari shiny
+2. Membuat shiny sederhana
+3. Membuat dengan menerapkan shiny dashboard
+4. deploy ke shinyapps.io
+
+
+## Library
+```{r}
+library(shiny)
+library(shinydashboard)
+library(rsconnect)
+```
+
+
