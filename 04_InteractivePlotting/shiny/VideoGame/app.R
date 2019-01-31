@@ -48,6 +48,17 @@ ign20$consolePlatform <- sapply(ign20$platform, selectConsole)
 table(ign20$consolePlatform)
 
 
+ign20.Nintendo <- ign20 %>% 
+  filter(consolePlatform == "Nintendo") %>% 
+  mutate(platform = droplevels(platform))
+
+ign20.Sony <- ign20 %>% 
+  filter(consolePlatform == "Sony")
+
+ign20.Microsoft <- ign20 %>% 
+  filter(consolePlatform == "Microsoft")
+
+
 
 ############################################################################################
 ####                                                                                    ####
@@ -67,6 +78,9 @@ ui <- dashboardPage(skin = "blue",
   dashboardBody(
     tabItems(
       tabItem(tabName = "nintendo",
+              selectInput(inputId = "platformInput",
+                          label = "Platform Type",
+                          choices = levels(ign20.Nintendo$platform)),
               plotlyOutput("plotNintendo")),
       tabItem(tabName = "sony"),
       tabItem(tabName = "microsoft")
@@ -75,16 +89,16 @@ ui <- dashboardPage(skin = "blue",
 )
 
 server <- function(input, output) {
-  ign20.Nintendo <- ign20 %>% 
-    filter(consolePlatform == "Nintendo")
+  # ign20.Nintendo.plot <- ign20.Nintendo %>% 
+  #   filter(platform == input$platformInput)
   
   output$plotNintendo <- renderPlotly({
     plot1 <- 
       ggplot(ign20.Nintendo,
                     aes(x=factor(release_year),
-                        text = sprintf(paste("Tahun Rilis : %s\n Jenis Platform : %s\n"),
-                                              ign20.Nintendo$release_year, 
-                                              ign20.Nintendo$platform))) +
+                        text = sprintf(paste("Release Year : %s\n Platform Type : %s\n"),
+                                              release_year, 
+                                              platform))) +
       geom_bar(aes(fill=platform)) +
       theme(axis.text.x = element_text(angle=90, hjust=1)) +
       labs(title = "Total game were released every year in Nintendo console", x = "Release Year", y = "Total Game")
