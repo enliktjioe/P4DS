@@ -56,12 +56,14 @@ server <- function(input, output) {
       summarise(totalVideo = n())
     
     plot2 <- ggplot(data = vids.hour, aes(x = reorder(category_id, totalVideo),
-                                          y = totalVideo)) +
+                                          y = totalVideo,
+                                          text = sprintf(paste("Jumlah Video : %s\n Nama Kategori : %s\n"),
+                                                         vids.hour$totalVideo, vids.hour$category_id))) +
       geom_col() +
       coord_flip() +
       scale_y_continuous(limits = c(0,150))
     
-    ggplotly(plot2)
+    ggplotly(plot2, tooltip = "text")
   })
 }
 
