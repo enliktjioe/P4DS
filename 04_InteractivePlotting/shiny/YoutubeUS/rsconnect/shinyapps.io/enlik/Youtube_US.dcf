@@ -1,0 +1,12 @@
+name: Youtube_US
+title: Youtube_US
+username:
+account: enlik
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 678794
+bundleId: 1847885
+url: https://enlik.shinyapps.io/Youtube_US/
+when: 1548932408.60855
+asMultiple: FALSE
+asStatic: FALSE
