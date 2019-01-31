@@ -1,0 +1,34 @@
+
+
+package yang digunakan:
+-shiny
+-shinydashboard
+-rsconnect
+
+agenda hari ke 3:
+  
+1. konsep dari shiny
+- user
+- UI
+-Server
+
+2. membuat shiny sederhana
+- membuat layout (UI)
+- membuat input (UI)
+- membuat render (Server)
+- membuat output (UI)
+- Run
+
+
+
+3. membuat shiny dengan menerapkan shinydashboard
+yang berbeda hanya layout saja
+
+https://rstudio.github.io/shinydashboard/get_started.html
+
+Agenda hari ke 4:
+  
+4. mengedit text pada plotly
+
+5. deploy ke shinyapps.io
+
