@@ -23,9 +23,11 @@ nintendo <- c("Game Boy","Game Boy Advance","Game Boy Color" ,"GameCube", "NES",
                 "Nintendo 64", "Nintendo 64DD","Nintendo DS", "Nintendo DSi","Super NES","Wii","Wii U")
 sony <- c("PlayStation","PlayStation 2","PlayStation 3","PlayStation 4","PlayStation Portable","PlayStation Vita")
 microsoft <- c("Xbox","Xbox 360","Xbox One")
+mobile <- c("Android", "iPad", "iPhone", "iPod", "Windows Phone")
+desktop <- c("Macintosh", "Linux", "PC")
 
-# Function to create new console platform
-selectConsole <- function(x) {
+# Function to create new category of platform
+selectCategory <- function(x) {
   if (x %in% nintendo == TRUE){
     return("Nintendo")
   }
@@ -38,26 +40,22 @@ selectConsole <- function(x) {
     return("Microsoft")
   }
   
+  else if(x %in% mobile == TRUE){
+    return("Mobile")
+  }
+  
+  else if(x %in% desktop == TRUE){
+    return("Desktop")
+  }
+  
   else{
     return("Others")
   }
   
 }
 
-ign20$consolePlatform <- sapply(ign20$platform, selectConsole)
-table(ign20$consolePlatform)
-
-
-ign20.Nintendo <- ign20 %>% 
-  filter(consolePlatform == "Nintendo") %>% 
-  mutate(platform = droplevels(platform))
-
-ign20.Sony <- ign20 %>% 
-  filter(consolePlatform == "Sony")
-
-ign20.Microsoft <- ign20 %>% 
-  filter(consolePlatform == "Microsoft")
-
+ign20$categoryPlatform <- as.factor(sapply(ign20$platform, selectCategory))
+table(ign20$categoryPlatform)
 
 
 ############################################################################################
@@ -70,38 +68,36 @@ ui <- dashboardPage(skin = "blue",
   dashboardHeader(title = "Video Games"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Nintendo", tabName = "nintendo", icon = icon("dashboard")),
-      menuItem("Sony", tabName = "sony", icon = icon("dashboard")),
-      menuItem("Microsoft", tabName = "microsoft", icon = icon("dashboard"))
+      menuItem("By Platform", tabName = "platform", icon = icon("dashboard")),
+      menuItem("TBA", tabName = "tba", icon = icon("dashboard")),
+      menuItem("TBA", tabName = "tba", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "nintendo",
-              selectInput(inputId = "platformInput",
-                          label = "Platform Type",
-                          choices = levels(ign20.Nintendo$platform)),
-              plotlyOutput("plotNintendo")),
-      tabItem(tabName = "sony"),
-      tabItem(tabName = "microsoft")
+      tabItem(tabName = "platform",
+              selectInput(inputId = "categoryPlatform",
+                          label = "Choose Your Platform",
+                          choices = levels(ign20$categoryPlatform)),
+              plotlyOutput("plot1")),
+      tabItem(tabName = "tba"),
+      tabItem(tabName = "tba")
     )
   )
 )
 
 server <- function(input, output) {
   
-  output$plotNintendo <- renderPlotly({
-    ign20.Nintendo.agg <- ign20.Nintendo %>%
-      filter(platform == input$platformInput) %>% 
-      summarise(totalGame = n())
+  output$plot1 <- renderPlotly({
+    ign20.platform <- ign20 %>%
+      filter(categoryPlatform == input$categoryPlatform)
     
     plot1 <- 
-      ggplot(ign20.Nintendo.agg,
-                    aes(x = factor(release_year),
-                        y = totalGame)) +
-      geom_col() +
+      ggplot(ign20.platform,
+                    aes(x = factor(release_year))) +
+      geom_bar(aes(fill = platform)) +
       theme(axis.text.x = element_text(angle=90, hjust=1)) +
-      labs(title = "Total game were released every year in Nintendo console", x = "Release Year", y = "Total Game")
+      labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
     
     ggplotly(plot1)
   })
