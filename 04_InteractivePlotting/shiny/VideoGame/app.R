@@ -89,21 +89,21 @@ ui <- dashboardPage(skin = "blue",
 )
 
 server <- function(input, output) {
-  # ign20.Nintendo.plot <- ign20.Nintendo %>% 
-  #   filter(platform == input$platformInput)
   
   output$plotNintendo <- renderPlotly({
+    ign20.Nintendo.agg <- ign20.Nintendo %>%
+      filter(platform == input$platformInput) %>% 
+      summarise(totalGame = n())
+    
     plot1 <- 
-      ggplot(ign20.Nintendo,
-                    aes(x=factor(release_year),
-                        text = sprintf(paste("Release Year : %s\n Platform Type : %s\n"),
-                                              release_year, 
-                                              platform))) +
-      geom_bar(aes(fill=platform)) +
+      ggplot(ign20.Nintendo.agg,
+                    aes(x = factor(release_year),
+                        y = totalGame)) +
+      geom_col() +
       theme(axis.text.x = element_text(angle=90, hjust=1)) +
       labs(title = "Total game were released every year in Nintendo console", x = "Release Year", y = "Total Game")
     
-    ggplotly(plot1, tooltip = "text")
+    ggplotly(plot1)
   })
 }
 
