@@ -23,8 +23,6 @@ nintendo <- c("Game Boy","Game Boy Advance","Game Boy Color" ,"GameCube", "NES",
                 "Nintendo 64", "Nintendo 64DD","Nintendo DS", "Nintendo DSi","Super NES","Wii","Wii U")
 sony <- c("PlayStation","PlayStation 2","PlayStation 3","PlayStation 4","PlayStation Portable","PlayStation Vita")
 microsoft <- c("Xbox","Xbox 360","Xbox One")
-mobile <- c("Android", "iPad", "iPhone", "iPod", "Windows Phone")
-desktop <- c("Macintosh", "Linux", "PC")
 
 # Function to create new category of platform
 selectCategory <- function(x) {
@@ -38,14 +36,6 @@ selectCategory <- function(x) {
   
   else if(x %in% microsoft == TRUE){
     return("Microsoft")
-  }
-  
-  else if(x %in% mobile == TRUE){
-    return("Mobile")
-  }
-  
-  else if(x %in% desktop == TRUE){
-    return("Desktop")
   }
   
   else{
@@ -65,12 +55,12 @@ table(ign20$categoryPlatform)
 
 # Shiny Web Apps
 ui <- dashboardPage(skin = "blue",
-  dashboardHeader(title = "Video Games"),
+  dashboardHeader(title = "Console Games"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("By Platform", tabName = "platform", icon = icon("dashboard")),
-      menuItem("TBA", tabName = "tba", icon = icon("dashboard")),
-      menuItem("TBA", tabName = "tba", icon = icon("dashboard"))
+      menuItem("Console Wars", tabName = "consoleWars", icon = icon("dashboard")),
+      menuItem("By Score", tabName = "score", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
@@ -80,8 +70,13 @@ ui <- dashboardPage(skin = "blue",
                           label = "Choose Your Platform",
                           choices = levels(ign20$categoryPlatform)),
               plotlyOutput("plot1")),
-      tabItem(tabName = "tba"),
-      tabItem(tabName = "tba")
+      tabItem(tabName = "consoleWars",
+              plotlyOutput(outputId = "plot2")),
+      tabItem(tabName = "score",
+              selectInput(inputId = "scoreInput", 
+                          label = "Choose Score Phrase", 
+                          choices = levels(ign20$score_phrase)),
+              plotlyOutput(outputId = "plot3"))
     )
   )
 )
@@ -100,6 +95,29 @@ server <- function(input, output) {
       labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
     
     ggplotly(plot1)
+  })
+  
+  output$plot2 <- renderPlotly({
+    plot2 <- 
+      ggplot(ign20[ign20$categoryPlatform != "Others",],aes(x=factor(release_year))) +
+      geom_bar(aes(fill=categoryPlatform)) +
+      theme(axis.text.x = element_text(angle=90, hjust=1)) +
+      labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
+    
+    ggplotly(plot2)
+  })
+  
+  output$plot3 <- renderPlotly({
+    ign20.score <- ign20 %>% 
+      filter(score_phrase == input$scoreInput)
+    
+    plot3 <- 
+      ggplot(ign20.score, aes(x=factor(release_year))) +
+      geom_bar(aes(fill=score_phrase), show.legend = F) +
+      theme(axis.text.x = element_text(angle=90, hjust=1)) +
+      labs(title = "Review Score", x = "Platform", y = "Total")
+    
+    ggplotly(plot3)
   })
 }
 
