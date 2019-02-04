@@ -59,8 +59,7 @@ ui <- dashboardPage(skin = "blue",
   dashboardSidebar(
     sidebarMenu(
       menuItem("By Platform", tabName = "platform", icon = icon("dashboard")),
-      menuItem("Console Wars", tabName = "consoleWars", icon = icon("dashboard")),
-      menuItem("By Score", tabName = "score", icon = icon("dashboard"))
+      menuItem("Console Wars", tabName = "consoleWars", icon = icon("dashboard"))
     )
   ),
   dashboardBody(
@@ -71,12 +70,7 @@ ui <- dashboardPage(skin = "blue",
                           choices = levels(ign20$categoryPlatform)),
               plotlyOutput("plot1")),
       tabItem(tabName = "consoleWars",
-              plotlyOutput(outputId = "plot2")),
-      tabItem(tabName = "score",
-              selectInput(inputId = "scoreInput", 
-                          label = "Choose Score Phrase", 
-                          choices = levels(ign20$score_phrase)),
-              plotlyOutput(outputId = "plot3"))
+              plotlyOutput(outputId = "plot2"))
     )
   )
 )
@@ -105,20 +99,6 @@ server <- function(input, output) {
       labs(title = "Total game were released every year", x = "Release Year", y = "Total Game")
     
     ggplotly(plot2)
-  })
-  
-  output$plot3 <- renderPlotly({
-    ign20.score <- ign20 %>% 
-      filter(score_phrase == input$scoreInput)
-    
-    plot3 <- 
-      ggplot(ign20.score, aes(x=factor(release_year))) +
-      geom_bar(aes(fill=score_phrase), show.legend = F) +
-      theme(axis.text.x = element_text(angle=90, hjust=1)) +
-      labs(title = "Review Score", x = "Platform", y = "Total")
-    
-    hide_legend(ggplotly(plot3))
-    
   })
 }
 

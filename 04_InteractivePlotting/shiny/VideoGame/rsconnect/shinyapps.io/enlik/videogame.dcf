@@ -1,0 +1,12 @@
+name: videogame
+title: videogame
+username:
+account: enlik
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 686741
+bundleId: 1854158
+url: https://enlik.shinyapps.io/videogame/
+when: 1549250490.04615
+asMultiple: FALSE
+asStatic: FALSE
