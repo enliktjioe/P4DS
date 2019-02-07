@@ -1,0 +1,70 @@
+---
+title: "DV Capstone - Analysis FIFA 19 Player"
+author: "Enlik Tjioe"
+date: "4 February 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Library
+```{r}
+library(tidyverse)
+library(ggthemes)
+library(lubridate)
+library(rworldmap)
+library(gplots)
+library(knitr)
+
+options(scipen = 9999)
+```
+
+# Introduction
+bla bla bla
+
+**Some things I want to analyse:**
+
+- Find out which project have the highest potential
+- Find out relation between a and b (like in the book OUTLIER)
+
+# Pre-processing Data
+```{r}
+ksdata <- read.csv("ks-projects-201801.csv")
+str(ksdata)
+
+```
+
+```{r}
+kable(head(ksdata))
+```
+
+```{r}
+kable(tail(ksdata))
+```
+
+```{r}
+sapply(ksdata, function(x) sum(is.na(x)))
+```
+We will remove column "usd.pledged" because it contains NA values, but we don't need it for Exploratory Data Analysis.
+
+```{r}
+ksdata <- ksdata[, -13]
+colnames(ksdata)[13] <- "usd_pledged"
+colnames(ksdata)[14] <- "usd_goal"
+```
+
+
+# Feature Engineering
+//TODO
+
+
+# What types of projects are most popular?
+```{r}
+cat.freq <- ksdata %>% 
+  
+```
+
+
+
