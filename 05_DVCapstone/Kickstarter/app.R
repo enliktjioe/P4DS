@@ -30,17 +30,14 @@ ui <- dashboardPage(skin = "green",
                         menuItem(text = "Project Result",
                                  tabName ="menu3",
                                  icon = icon("check-circle")),
-                        menuItem(text = "TBA",
+                        menuItem(text = "Success vs Failure Rate (Category)",
                                  tabName ="menu4",
                                  icon = icon("kickstarter")),
-                        menuItem(text = "TBA",
+                        menuItem(text = "Total Projects per Year",
                                  tabName ="menu5",
                                  icon = icon("kickstarter")),
-                        menuItem(text = "TBA",
+                        menuItem(text = "Success vs Failure Rate (Year)",
                                  tabName ="menu6",
-                                 icon = icon("kickstarter")),
-                        menuItem(text = "TBA",
-                                 tabName ="menu7",
                                  icon = icon("kickstarter"))
                         
                       )
@@ -79,9 +76,6 @@ ui <- dashboardPage(skin = "green",
                         ),
                         tabItem(tabName = "menu6",
                                 plotOutput("plot6")
-                        ),
-                        tabItem(tabName = "menu7",
-                                plotOutput("plot7")
                         )
                       )
                     )
@@ -237,13 +231,6 @@ server <- function(input, output) {
   
   # Output 4
   output$plot4 <- renderPlot({
-    
-    
-  })
-  
-  # Output 5
-  output$plot5 <- renderPlot({
-    
     state.pct <- ksdata %>%
       filter(state %in% c("successful", "failed")) %>%
       group_by(main_category, state) %>%
@@ -256,18 +243,22 @@ server <- function(input, output) {
     
     ggplot(state.pct, aes(main_category, pct, fill=state)) + geom_bar(stat="identity") + 
       ggtitle("Success vs. Failure Rate by Project Category") + 
-      xlab("Project Category") + ylab("Percentage") + scale_y_continuous(labels=scales::percent) + 
+      xlab("Project Category") + ylab("Percentage") + 
+      scale_y_continuous(labels=scales::percent) + 
       scale_fill_discrete(name="Project Status", breaks=c("successful", "failed"),
                           labels=c("Success", "Failure")) + 
       geom_text(aes(label=paste0(round(pct*100,1),"%")), position=position_stack(vjust=0.5), 
                 colour="white", size=5) + 
       theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
             axis.text.x=element_text(size=12), legend.position="bottom", 
-            legend.title=element_text(size=12, face="bold")) + coord_flip()
+            legend.title=element_text(size=12, face="bold")) + 
+      coord_flip()
+    
+    
   })
   
-  # Output 6
-  output$plot6 <- renderPlot({
+  # Output 5
+  output$plot5 <- renderPlot({
     
     year.freq <- ksdata %>%
       filter(year(launched)!="1970") %>%
@@ -280,12 +271,12 @@ server <- function(input, output) {
       geom_text(aes(label=paste0(count)), vjust=-0.5) + 
       theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
             axis.text.x=element_text(size=12), legend.position="null")
+    
+    
   })
   
-  
-  
-  # Output 7
-  output$plot7 <- renderPlot({
+  # Output 6
+  output$plot6 <- renderPlot({
     
     state.pct2 <- ksdata %>%
       filter(year(launched)!="1970", state %in% c("successful", "failed")) %>%
