@@ -5,9 +5,9 @@ account: enlik
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 700594
-bundleId: 1863418
+bundleId: 1863517
 url: https://enlik.shinyapps.io/Kickstarter-test/
-when: 1549605234.40312
+when: 1549611101.75542
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: youtubetrends.csv

@@ -7,6 +7,9 @@ library(shiny)
 library(shinydashboard)
 options(scipen = 9999)
 
+# Just in this computer
+setwd("~/GitRepo/algoritma_ds_academy/05_DVCapstone/Kickstarter/")
+
 # Pre-processing Data
 ksdata <- read.csv("ks-projects-201801.csv")
 ksdata <- ksdata[, -13]
@@ -18,9 +21,9 @@ ui <- dashboardPage(skin = "green",
                     dashboardHeader(title = "Kickstarter Dashboard"),
                     dashboardSidebar(
                       sidebarMenu(
-                        menuItem(text = "Most Popular Project",
+                        menuItem(text = "Most Popular Category",
                                  tabName ="menu1",
-                                 icon = icon("dashboard")),
+                                 icon = icon("level-up-alt")),
                         menuItem(text = "TBA",
                                  tabName ="menu2",
                                  icon = icon("dashboard")),
@@ -45,6 +48,9 @@ ui <- dashboardPage(skin = "green",
                     dashboardBody(
                       tabItems(
                         tabItem(tabName = "menu1",
+                                selectInput(inputId = "input1",
+                                            label = "Which Category?",
+                                            choices = c("main_category", "sub_category")),
                                 plotOutput("plot1")
                         ),
                         tabItem(tabName = "menu2",
@@ -74,19 +80,41 @@ server <- function(input, output) {
   # Output 1
   output$plot1 <- renderPlot({
     
-    project.category <- ksdata %>% 
-      group_by(main_category) %>% 
-      summarize(count = n()) %>% 
-      arrange(desc(count))
+    if(input$input1 == "main_category"){
+      project.category <- ksdata %>% 
+        group_by(main_category) %>% 
+        summarize(count = n()) %>% 
+        arrange(desc(count))
+      
+      project.category$main_category <- factor(project.category$main_category, levels = project.category$main_category)
+      
+      ggplot(project.category, aes(x = main_category, y = count)) +
+        geom_bar(stat = "identity", aes(fill = main_category)) +
+        labs(title = "Total Projects by Main-Category", x = "Main-Category Name", y = "Total") +
+        theme(axis.text.x = element_text(angle=90, hjust=1),
+              plot.title=element_text(hjust=0.5),
+              legend.position = "bottom") +
+        geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+    }
     
-    project.category$main_category <- factor(project.category$main_category, levels = project.category$main_category)
+    else if (input$input1 == "sub_category") {
+      project.subcategory <- ksdata %>% 
+        group_by(category) %>% 
+        summarize(count = n()) %>% 
+        arrange(desc(count))
+      
+      project.subcategory$category <- factor(project.subcategory$category, levels = project.subcategory$category)
+      
+      ggplot(head(project.subcategory, 10), aes(x = category, y = count)) +
+        geom_bar(stat = "identity", aes(fill = category)) +
+        labs(title = "Top 10 Projects by Sub-Category", x = "Sub-Category Name", y = "Total") +
+        theme(axis.text.x = element_text(angle=90, hjust=1),
+              plot.title=element_text(hjust=0.5),
+              legend.position = "bottom") +
+        geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+    }
     
-    ggplot(project.category, aes(x = main_category, y = count)) +
-      geom_bar(stat = "identity", aes(fill = main_category), show.legend = F) +
-      labs(title = "Total Projects per Category", x = "Category Name", y = "Total") +
-      theme(axis.text.x = element_text(angle=90, hjust=1),
-            plot.title=element_text(hjust=0.5)) +
-      geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+    
   })
   
   # Output 2
