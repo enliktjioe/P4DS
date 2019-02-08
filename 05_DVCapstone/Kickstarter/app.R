@@ -21,27 +21,27 @@ ui <- dashboardPage(skin = "green",
                     dashboardHeader(title = "Kickstarter Dashboard"),
                     dashboardSidebar(
                       sidebarMenu(
-                        menuItem(text = "Most Popular Category",
+                        menuItem(text = " Most Popular Category",
                                  tabName ="menu1",
-                                 icon = icon("level-up-alt")),
-                        menuItem(text = "TBA",
+                                 icon = icon("kickstarter")),
+                        menuItem(text = "Amount Pledged in USD",
                                  tabName ="menu2",
-                                 icon = icon("dashboard")),
+                                 icon = icon("dollar-sign")),
                         menuItem(text = "TBA",
                                  tabName ="menu3",
-                                 icon = icon("dashboard")),
+                                 icon = icon("kickstarter")),
                         menuItem(text = "TBA",
                                  tabName ="menu4",
-                                 icon = icon("dashboard")),
+                                 icon = icon("kickstarter")),
                         menuItem(text = "TBA",
                                  tabName ="menu5",
-                                 icon = icon("dashboard")),
+                                 icon = icon("kickstarter")),
                         menuItem(text = "TBA",
                                  tabName ="menu6",
-                                 icon = icon("dashboard")),
+                                 icon = icon("kickstarter")),
                         menuItem(text = "TBA",
                                  tabName ="menu7",
-                                 icon = icon("dashboard"))
+                                 icon = icon("kickstarter"))
                         
                       )
                     ),
@@ -60,6 +60,9 @@ ui <- dashboardPage(skin = "green",
                                 plotOutput("plot1")
                         ),
                         tabItem(tabName = "menu2",
+                                radioButtons(inputId = "input2",
+                                            label = "Select type",
+                                            choices = c("main_category", "sub_category", "project_name")),
                                 plotOutput("plot2")
                         ),
                         tabItem(tabName = "menu3",
@@ -94,7 +97,7 @@ server <- function(input, output) {
       
       project.category$main_category <- factor(project.category$main_category, levels = project.category$main_category)
       
-      plot1 <- ggplot(project.category, aes(x = main_category, y = count)) +
+      plot1a <- ggplot(project.category, aes(x = main_category, y = count)) +
         geom_bar(stat = "identity", aes(fill = main_category)) +
         labs(title = "Total Projects by Main-Category", x = "Main-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
@@ -102,7 +105,7 @@ server <- function(input, output) {
               legend.position = "bottom") +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
     
-      plot1
+      plot1a
     }
     
     else if (input$input1 == "sub_category") {
@@ -113,7 +116,7 @@ server <- function(input, output) {
       
       project.subcategory$category <- factor(project.subcategory$category, levels = project.subcategory$category)
       
-      plot1 <- ggplot(head(project.subcategory, input$categoryCount), aes(x = category, y = count)) +
+      plot1b <- ggplot(head(project.subcategory, input$categoryCount), aes(x = category, y = count)) +
         geom_bar(stat = "identity", aes(fill = category)) +
         labs(title = "Top 10 Projects by Sub-Category", x = "Sub-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
@@ -121,7 +124,7 @@ server <- function(input, output) {
               legend.position = "bottom") +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
     
-      plot1
+      plot1b
       
     }
     
@@ -131,18 +134,60 @@ server <- function(input, output) {
   # Output 2
   output$plot2 <- renderPlot({
     
-    category.pledged <- ksdata %>% 
-      group_by(main_category) %>% 
-      summarize(total = sum(usd_pledged)) %>% 
-      arrange(desc(total))
+    if(input$input2 == "main_category"){
+      
+      category.pledged <- ksdata %>% 
+        group_by(main_category) %>% 
+        summarize(total = sum(usd_pledged)) %>% 
+        arrange(desc(total))
+      
+      category.pledged$main_category <- factor(category.pledged$main_category, levels = category.pledged$main_category)
+      
+      plot2a <- ggplot(category.pledged, aes(x = main_category, y = total / 1000000)) +
+        geom_bar(stat = "identity", aes(fill = main_category)) +
+        labs(title = "Total Amount Pledged by Main Category", x = "Main Category", y = "Amount Pledged") +
+        theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90, hjust = 1), legend.position="null") +
+        geom_text(aes(label = paste0("$", round(total/1000000, 1), "M")), vjust = -0.5)
     
-    category.pledged$main_category <- factor(category.pledged$main_category, levels = category.pledged$main_category)
+      plot2a
+    }
     
-    ggplot(category.pledged, aes(x = main_category, y = total / 1000000)) +
-      geom_bar(stat = "identity", aes(fill = main_category)) +
-      labs(title = "Total Amount Pledged by Category", x = "Project Category", y = "Amount Pledged (in Millions USD)") +
-      theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90, hjust = 1), legend.position="null") +
-      geom_text(aes(label = paste0("$", round(total/1000000, 1))), vjust = -0.5)
+    else if(input$input2 == "sub_category") {
+      category.pledged <- ksdata %>% 
+        group_by(category) %>% 
+        summarize(total = sum(usd_pledged)) %>% 
+        arrange(desc(total))
+      
+      category.pledged$category <- factor(category.pledged$category, levels = category.pledged$category)
+      
+      plot2b <- ggplot(head(category.pledged, 10), aes(x = category, y = total / 1000000)) +
+        geom_bar(stat = "identity", aes(fill = category)) +
+        labs(title = "Top 10 - Total Amount Pledged by Sub Category", x = "Sub Category", y = "Amount Pledged") +
+        theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90, hjust = 1), legend.position="null") +
+        geom_text(aes(label = paste0("$", round(total/1000000, 1), "M")), vjust = -0.5)
+      
+      plot2b
+    }
+    
+    else if(input$input2 == "project_name"){
+      name.pledged <- ksdata %>% 
+        group_by(name) %>% 
+        summarize(total = sum(usd_pledged)) %>% 
+        arrange(desc(total))
+      
+      name.pledged$name <- factor(name.pledged$name, levels = name.pledged$name)
+      
+      plot2c <- ggplot(head(name.pledged, 10), aes(x = reorder(name, total), y = total / 1000000)) +
+        geom_bar(stat = "identity", aes(fill = name)) +
+        labs(title = "Top 10 - Total Amount Pledged by Project Name", x = "Project Name", y = "Amount Pledged") +
+        theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90, hjust = 1), legend.position="null") +
+        geom_text(aes(label = paste0("$", round(total/1000000, 1), "M"), hjust = -0.15)) +
+        coord_flip() +
+        scale_y_continuous(limits = c(0,25))
+      
+      plot2c
+    }
+    
   })
   
   # Output 3
