@@ -1,5 +1,6 @@
 library(tidyverse)
 library(knitr)
+library(lubridate)
 
 library(plotly)
 library(shiny)
@@ -182,7 +183,7 @@ server <- function(input, output) {
     ggplot(year.freq, aes(year, count, fill=count)) + geom_bar(stat="identity") + 
       ggtitle("Number of Projects by Launch Year") + xlab("Year") + ylab("Frequency") + 
       scale_x_discrete(limits=c(2009:2018)) + 
-      geom_text(aes(label=paste0(count)), vjust=-0.5) + theme_economist() + 
+      geom_text(aes(label=paste0(count)), vjust=-0.5) + 
       theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
             axis.text.x=element_text(size=12), legend.position="null")
   })
@@ -206,7 +207,7 @@ server <- function(input, output) {
       scale_fill_discrete(name="Project Status", breaks=c("successful", "failed"),
                           labels=c("Success", "Failure")) + 
       geom_text(aes(label=paste0(round(pct*100,1),"%")), position=position_stack(vjust=0.5), 
-                colour="white", size=5) + theme_economist() + 
+                colour="white", size=5) + 
       theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
             axis.text.x=element_text(size=12), legend.position="bottom", 
             legend.title=element_text(size=12, face="bold"))
