@@ -49,8 +49,14 @@ ui <- dashboardPage(skin = "green",
                       tabItems(
                         tabItem(tabName = "menu1",
                                 selectInput(inputId = "input1",
-                                            label = "Which Category?",
+                                            label = "Choose Category",
                                             choices = c("main_category", "sub_category")),
+                                sliderInput(inputId = "categoryCount",
+                                            label = "How many Sub-Category to show?",
+                                            min = 5,
+                                            max = 25,
+                                            value = 10,
+                                            step = 1),
                                 plotOutput("plot1")
                         ),
                         tabItem(tabName = "menu2",
@@ -88,13 +94,15 @@ server <- function(input, output) {
       
       project.category$main_category <- factor(project.category$main_category, levels = project.category$main_category)
       
-      ggplot(project.category, aes(x = main_category, y = count)) +
+      plot1 <- ggplot(project.category, aes(x = main_category, y = count)) +
         geom_bar(stat = "identity", aes(fill = main_category)) +
         labs(title = "Total Projects by Main-Category", x = "Main-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
               plot.title=element_text(hjust=0.5),
               legend.position = "bottom") +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+    
+      plot1
     }
     
     else if (input$input1 == "sub_category") {
@@ -105,13 +113,16 @@ server <- function(input, output) {
       
       project.subcategory$category <- factor(project.subcategory$category, levels = project.subcategory$category)
       
-      ggplot(head(project.subcategory, 10), aes(x = category, y = count)) +
+      plot1 <- ggplot(head(project.subcategory, input$categoryCount), aes(x = category, y = count)) +
         geom_bar(stat = "identity", aes(fill = category)) +
         labs(title = "Top 10 Projects by Sub-Category", x = "Sub-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
               plot.title=element_text(hjust=0.5),
               legend.position = "bottom") +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+    
+      plot1
+      
     }
     
     
