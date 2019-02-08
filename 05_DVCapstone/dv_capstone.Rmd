@@ -17,6 +17,7 @@ library(lubridate)
 library(rworldmap)
 library(gplots)
 library(knitr)
+library(plotly)
 
 options(scipen = 9999)
 ```
@@ -56,15 +57,34 @@ colnames(ksdata)[14] <- "usd_goal"
 ```
 
 
-# Feature Engineering
-//TODO
-
-
 # What types of projects are most popular?
 ```{r}
 cat.freq <- ksdata %>% 
+  group_by(main_category) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+cat.freq$main_category <- factor(cat.freq$main_category, levels = cat.freq$main_category)
   
+ggplot(cat.freq, aes(x = main_category, y = count)) +
+  geom_bar(stat = "identity", aes(fill = main_category), show.legend = F) +
+  labs(title = "Total Projects per Category", x = "Category Name", y = "Total") +
+  theme(axis.text.x = element_text(angle=90, hjust=1),
+        plot.title=element_text(hjust=0.5))
 ```
 
+Film & Video is the most popular project category in Kickstarter
+
+
+# What types of projects are being funded?
+Top 20 highest funded projects
+```{r}
+kable(head(ksdata[order(-ksdata$usd_pledged), c(2,3,13)], 20))
+```
+
+Top 20 project with highest total backers
+```{r}
+kable(head(ksdata[order(-ksdata$backers), c(2,3,11)],20))
+```
 
 
