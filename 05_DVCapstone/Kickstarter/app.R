@@ -31,10 +31,10 @@ ui <- dashboardPage(skin = "green",
                                  icon = icon("dollar-sign")),
                         menuItem(text = "Top 10 Most Funded Project (2)",
                                  tabName ="menu4",
-                                 icon = icon("dollar-sign"))
-                        # menuItem(text = "Project Result",
-                        #          tabName ="menu3",
-                        #          icon = icon("check-circle")),
+                                 icon = icon("dollar-sign")),
+                        menuItem(text = "Project Result",
+                                 tabName ="menu5",
+                                 icon = icon("check-circle"))
                         # menuItem(text = "Success vs Failure Rate (Category)",
                         #          tabName ="menu4",
                         #          icon = icon("kickstarter")),
@@ -87,13 +87,13 @@ ui <- dashboardPage(skin = "green",
                                                         "Hardware","Technology",
                                                         "All Category")),
                                 plotOutput("plot4")
+                        ),
+                        tabItem(tabName = "menu5",
+                                radioButtons(inputId = "input5",
+                                             label = "Select type",
+                                             choices = c("all_results", "percentage_completion")),
+                                plotlyOutput("plot5")
                         )
-                        # tabItem(tabName = "menu3",
-                        #         radioButtons(inputId = "input3",
-                        #                      label = "Select type",
-                        #                      choices = c("all_results", "percentage_completion")),
-                        #         plotOutput("plot3")
-                        # ),
                         # tabItem(tabName = "menu4",
                         #         plotOutput("plot4")
                         # ),
@@ -258,47 +258,56 @@ server <- function(input, output) {
   })
   
   
-  # Output 3
-  # output$plot3 <- renderPlot({
-  #   
-  #   if(input$input3 == "all_results"){
-  #     state.freq <- ksdata %>% 
-  #       group_by(state) %>% 
-  #       summarize(count = n()) %>% 
-  #       arrange(desc(count))
-  #     
-  #     state.freq$state <- factor(state.freq$state, levels = state.freq$state)
-  #     
-  #     ggplot(state.freq, aes(x = state, y = count)) +
-  #       geom_bar(stat = "identity", aes(fill = state), show.legend = F) +
-  #       ggtitle("Project by Status") + xlab("Status") + ylab("Total") +
-  #       geom_text(aes(label = paste0(round(count/1000,1), "K")), vjust = -0.5) +
-  #       theme(plot.title = element_text(hjust = 0.5))
-  #   }
-  #   
-  #   else if(input$input3 == "percentage_completion"){
-  #     state.grp <- ksdata %>%
-  #       filter(state!="undefined") %>%
-  #       mutate(grp=ifelse(state %in% c("successful", "failed"), "complete", "incomplete")) %>%
-  #       group_by(grp, state) %>%
-  #       summarize(count=n()) %>%
-  #       mutate(pct=count/sum(count)) %>%
-  #       arrange(grp, desc(-state))
-  #     
-  #     state.grp$state <- factor(state.grp$state, levels=state.grp$state)
-  #     
-  #     ggplot(state.grp, aes(grp, pct, fill=state)) + geom_bar(stat="identity") + 
-  #       ggtitle("Project Status by Completion") + xlab("Project Completion") + ylab("Percentage") + 
-  #       geom_text(aes(label=paste0(round(pct*100,1),"%")),
-  #                 position=position_stack(vjust=0.5), 
-  #                 colour="white", size=5) +
-  #       theme(plot.title=element_text(hjust=0.5), 
-  #             axis.title=element_text(size=12, face="bold"),
-  #             axis.text.x=element_text(size=12), legend.position="bottom",
-  #             legend.title=element_text(size=12, face="bold")) +
-  #       scale_y_continuous(labels=scales::percent)
-  #   }
-  # })
+  # Output 5
+  output$plot5 <- renderPlotly({
+
+    if(input$input5 == "all_results"){
+      state.freq <- ksdata %>%
+        group_by(state) %>%
+        summarize(count = n()) %>%
+        arrange(desc(count))
+
+      state.freq$state <- factor(state.freq$state, levels = state.freq$state)
+
+      plot5a <- ggplot(state.freq, aes(x = state, y = count,
+                                       text = sprintf(paste("Count : %s\nStatus : %s\n"),
+                                                      state.freq$count, state.freq$state))) +
+        geom_bar(stat = "identity", aes(fill = state), show.legend = F) +
+        ggtitle("Project by Status") + xlab("Status") + ylab("Total") +
+        geom_text(aes(label = paste0(round(count/1000,1), "K")), vjust = -0.5) +
+        theme(plot.title = element_text(hjust = 0.5))
+      
+      ggplotly(plot5a, tooltip = "text")
+    }
+
+    else if(input$input5 == "percentage_completion"){
+      state.grp <- ksdata %>%
+        filter(state!="undefined") %>%
+        mutate(grp=ifelse(state %in% c("successful", "failed"), "complete", "incomplete")) %>%
+        group_by(grp, state) %>%
+        summarize(count=n()) %>%
+        mutate(pct=count/sum(count)) %>%
+        arrange(grp, desc(-state))
+
+      state.grp$state <- factor(state.grp$state, levels=state.grp$state)
+
+      plot5b <- ggplot(state.grp, aes(grp, pct, fill=state,
+                                      text = sprintf(paste("Count : %s\nStatus : %s\n"),
+                                                     state.grp$count, state.grp$state))) +
+        geom_bar(stat="identity") +
+        ggtitle("Project Status by Completion") + xlab("Project Completion") + ylab("Percentage") +
+        geom_text(aes(label=paste0(round(pct*100,1),"%")),
+                  position=position_stack(vjust=0.5),
+                  colour="white", size=5) +
+        theme(plot.title=element_text(hjust=0.5),
+              axis.title=element_text(size=12, face="bold"),
+              axis.text.x=element_text(size=12), legend.position="bottom",
+              legend.title=element_text(size=12, face="bold")) +
+        scale_y_continuous(labels=scales::percent)
+      
+      ggplotly(plot5b, tooltip = "text")
+    }
+  })
   # 
   # # Output 4
   # output$plot4 <- renderPlot({
