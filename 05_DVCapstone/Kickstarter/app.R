@@ -7,9 +7,6 @@ library(shiny)
 library(shinydashboard)
 options(scipen = 9999)
 
-# Remove before publish
-setwd("~/GitRepo/algoritma_ds_academy/05_DVCapstone/Kickstarter/")
-
 # Pre-processing Data
 ksdata <- read.csv("ks-projects-201801.csv")
 ksdata <- ksdata[, -13]

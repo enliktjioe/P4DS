@@ -1,7 +1,7 @@
 ---
 title: "DV Capstone - Kickstarter.com Data Analysis"
 author: "Enlik Tjioe"
-date: "4 February 2019"
+date: "7 February 2019"
 output: html_document
 ---
 
@@ -9,8 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Library
-```{r}
+# Library
+```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(knitr)
 library(plotly)
@@ -20,9 +20,9 @@ options(scipen = 9999)
 ```
 
 # Introduction
-bla bla bla
+**Kickstarter** is American company based in New York, that maintains a global crowdfunding platform focused on creativity and merchandising. The company's stated mission is to "help bring creative projects to life".[4] Kickstarter has reportedly received more than $4 billion in pledges from 15.5 million backers to fund 257,000 creative projects, such as films, music, stage shows, comics, journalism, video games, technology and food-related projects. (https://en.wikipedia.org/wiki/Kickstarter)
 
-**Some things I want to analyse:**
+**Some things I want to analyze:**
 
 - What types of projects were most popular?
 - What types of projects were being funded?
@@ -36,6 +36,7 @@ str(ksdata)
 
 ```
 
+I'm using `kable()` function from knitr package to make simple table viewing
 ```{r}
 kable(head(ksdata))
 ```
@@ -47,7 +48,7 @@ kable(tail(ksdata))
 ```{r}
 sapply(ksdata, function(x) sum(is.na(x)))
 ```
-We will remove column "usd.pledged" because it contains NA values, but we don't need it for Exploratory Data Analysis.
+I will remove the column `usd.pledged` because it contains NA values, and also I don't need it for data analysis.
 
 ```{r}
 ksdata <- ksdata[, -13]
@@ -57,6 +58,7 @@ colnames(ksdata)[14] <- "usd_goal"
 
 
 # What types of projects were most popular?
+By Main Category
 ```{r, fig.height=6, fig.width=10}
 project.category <- ksdata %>% 
   group_by(main_category) %>% 
@@ -73,8 +75,27 @@ ggplot(project.category, aes(x = main_category, y = count)) +
   geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
 ```
 
-Film & Video is the most popular project category in Kickstarter
+From this graph, Film & Video is the most popular main category in Kickstarter with a total of 63.6K projects were released all the time. Music, Publishing, Games, and Technology make it under top 5 popular main category in Kickstarter.
 
+By Subcategory
+```{r}
+project.subcategory <- ksdata %>% 
+        group_by(category) %>% 
+        summarize(count = n()) %>% 
+        arrange(desc(count))
+      
+project.subcategory$category <- factor(project.subcategory$category, levels = project.subcategory$category)
+      
+ggplot(head(project.subcategory, 15), aes(x = category, y = count)) +
+  geom_bar(stat = "identity", aes(fill = category)) +
+  labs(title = "Top 10 Projects by Sub-Category", x = "Sub-Category Name", y = "Total") +
+  theme(axis.text.x = element_text(angle=90, hjust=1),
+        plot.title=element_text(hjust=0.5),
+        legend.position = "bottom") +
+  geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5) +   
+  scale_y_continuous(limits = c(0,25000))
+```
+From subcategory, Product Design becomes the most popular project with over 22.3K projects were released all time.
 
 # What types of projects were being funded?
 Top 20 highest funded projects
@@ -82,12 +103,13 @@ Top 20 highest funded projects
 kable(head(ksdata[order(-ksdata$usd_pledged), c(2,3,13)], 20))
 ```
 
+
 Top 20 project with highest total backers
 ```{r}
 kable(head(ksdata[order(-ksdata$backers), c(2,3,11)],20))
 ```
 
-Visualization
+Main Category Visualization
 ```{r, fig.height=6, fig.width=10}
 category.pledged <- ksdata %>% 
   group_by(main_category) %>% 
@@ -103,10 +125,10 @@ ggplot(category.pledged, aes(x = main_category, y = total / 1000000)) +
   geom_text(aes(label = paste0("$", round(total/1000000, 1))), vjust = -0.5)
   
 ```
-Games, Design, and Technology are the highest grossing categories by far.
+Games, Design, and Technology were the most funded categories with total funds from these three categories more than 2 Billion USD.
 
 
-Sub-Category Analysis
+Sub-Category Visualization
 ```{r}
 category.pledged <- ksdata %>% 
         group_by(category) %>% 
@@ -123,6 +145,7 @@ category.pledged <- ksdata %>%
       
       plot2b
 ```
+Product Design and Tabletop Games become the top 2 most popular sub-category with a total from both categories more than 1 Billion USD.
 
 # What types of projects were successful and unsuccessful?
 
@@ -140,9 +163,9 @@ ggplot(state.freq, aes(x = state, y = count)) +
   geom_text(aes(label = paste0(round(count/1000,1), "K")), vjust = -0.5)
 ```
 
-In truth, failed projects was more than successful projects.
+But in reality, Kickstarter projects have more failed projects compare to successful projects.
 
-```{r}
+```{r warning=FALSE}
 state.grp <- ksdata %>%
   filter(state!="undefined") %>%
   mutate(grp=ifelse(state %in% c("successful", "failed"), "complete", "incomplete")) %>%
@@ -153,7 +176,7 @@ state.grp <- ksdata %>%
 
 state.grp$state <- factor(state.grp$state, levels=state.grp$state)
 
-ggplot(state.grp, aes(grp, pct, fill=state)) + geom_bar(stat="identity") + 
+plot <- ggplot(state.grp, aes(grp, pct, fill=state)) + geom_bar(stat="identity") + 
   ggtitle("Project Status by Completion") + xlab("Project Completion") + ylab("Percentage") + 
   geom_text(aes(label=paste0(round(pct*100,1),"%")),
             position=position_stack(vjust=0.5), 
@@ -163,8 +186,11 @@ ggplot(state.grp, aes(grp, pct, fill=state)) + geom_bar(stat="identity") +
         axis.text.x=element_text(size=12), legend.position="bottom",
         legend.title=element_text(size=12, face="bold")) +
   scale_y_continuous(labels=scales::percent)
+
+ggplotly(plot)
   
 ```
+As a comparison, the failed project has a 59.6% proportion compare to 40.4% successful projects. And surprisingly, 89.3% of projects were canceled before the funding time was finished.
 
 ```{r fig.height=6, fig.width=12}
 state.pct <- ksdata %>%
@@ -188,6 +214,7 @@ ggplot(state.pct, aes(main_category, pct, fill=state)) + geom_bar(stat="identity
         axis.text.x=element_text(size=12), legend.position="bottom", 
         legend.title=element_text(size=12, face="bold")) + coord_flip()
 ```
+Dance, Theater, Comics become the best success rate in Kickstarter.
 
 # How many Successful and Failed Projects per Year?
 ```{r fig.height=6, fig.width=12}
@@ -199,10 +226,11 @@ year.freq <- ksdata %>%
 ggplot(year.freq, aes(year, count, fill=count)) + geom_bar(stat="identity") + 
   ggtitle("Number of Projects by Launch Year") + xlab("Year") + ylab("Frequency") + 
   scale_x_discrete(limits=c(2009:2018)) + 
-  geom_text(aes(label=paste0(count)), vjust=-0.5) + theme_economist() + 
+  geom_text(aes(label=paste0(count)), vjust=-0.5) + 
   theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
         axis.text.x=element_text(size=12), legend.position="null")
 ```
+2015 is the top year in Kickstarter history with over 70k projects were released at that time.
 
 ```{r fig.height=6, fig.width=12}
 state.pct2 <- ksdata %>%
@@ -215,14 +243,17 @@ state.pct2 <- ksdata %>%
 ggplot(state.pct2, aes(year, pct, fill=state)) + geom_bar(stat="identity") + 
   ggtitle("Success vs. Failure Rate by Year Launched") + 
   xlab("Year") + ylab("Percentage") + scale_x_discrete(limits=c(2009:2017)) + 
-  scale_y_continuous(labels=scales::percent) + 
-  scale_fill_discrete(name="Project Status", breaks=c("successful", "failed"),
-                      labels=c("Success", "Failure")) + 
+  scale_y_continuous(labels=scales::percent) +  
   geom_text(aes(label=paste0(round(pct*100,1),"%")), position=position_stack(vjust=0.5), 
-            colour="white", size=5) + theme_economist() + 
+            colour="white", size=5) +  
   theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"), 
         axis.text.x=element_text(size=12), legend.position="bottom", 
         legend.title=element_text(size=12, face="bold"))
 
 ```
+Kickstarter's failed projects were increasing from 2014-2015, but it's getting better from 2016-2017 with the increasing trend in successful projects. Project owner needs to learn from the mistake in the past. 
+ 
 
+
+# Final Thoughts
+Kickstarter will be the top choice among crowdfunding platform in the creative industry, with Product Design, Tabletop Games, Video Games, and also Technology become popular category every year. Project owner need to make it more appealing to current market and learn from previous failed project in the past.
