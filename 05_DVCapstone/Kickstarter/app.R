@@ -15,10 +15,10 @@ ksdata <- read.csv("ks-projects-201801.csv")
 ksdata <- ksdata[, -13]
 colnames(ksdata)[13] <- "usd_pledged"
 colnames(ksdata)[14] <- "usd_goal"
-
+top5_subCategory <- c("Product Design", "Tabletop Games", "Video Games", "Hardware","Technology")
 
 ui <- dashboardPage(skin = "green",
-                    dashboardHeader(title = "Kickstarter Dashboard"),
+                    dashboardHeader(title = "Kickstarter Explorer"),
                     dashboardSidebar(
                       sidebarMenu(
                         menuItem(text = "Most Popular Category",
@@ -38,6 +38,9 @@ ui <- dashboardPage(skin = "green",
                                  icon = icon("kickstarter")),
                         menuItem(text = "Success vs Failure Rate (Year)",
                                  tabName ="menu6",
+                                 icon = icon("kickstarter")),
+                        menuItem(text = "Prototype",
+                                 tabName ="menu7",
                                  icon = icon("kickstarter"))
                         
                       )
@@ -76,6 +79,12 @@ ui <- dashboardPage(skin = "green",
                         ),
                         tabItem(tabName = "menu6",
                                 plotOutput("plot6")
+                        ),
+                        tabItem(tabName = "menu7",
+                                selectInput(inputId = "input7",
+                                            label = "Choose Category",
+                                            choices = top5_subCategory),
+                                plotOutput("plot7")
                         )
                       )
                     )
@@ -100,7 +109,8 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle=90, hjust=1),
               plot.title=element_text(hjust=0.5),
               legend.position = "bottom") +
-        geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+        geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5) +
+        scale_y_continuous(limits = c(0,70000))
     
       plot1a
     }
@@ -184,7 +194,6 @@ server <- function(input, output) {
       
       plot2c
     }
-    
   })
   
   # Output 3
@@ -298,6 +307,28 @@ server <- function(input, output) {
             legend.title=element_text(size=12, face="bold"))
   })
   
+  # Output 7
+  output$plot7 <- renderPlot({
+    
+    
+    name.pledged <- ksdata %>% 
+      filter(category == input$input7) %>% 
+      group_by(name) %>% 
+      summarize(total = sum(usd_pledged)) %>% 
+      arrange(desc(total))
+    
+    name.pledged$name <- factor(name.pledged$name, levels = name.pledged$name)
+    
+    plot <- ggplot(head(name.pledged, 10), aes(x = reorder(name, total), y = total / 1000000)) +
+      geom_bar(stat = "identity", aes(fill = name)) +
+      labs(title = "Top 10 - Total Amount Pledged by Project Name", x = "Project Name", y = "Amount Pledged in USD") +
+      theme(plot.title = element_text(hjust = 0.5), legend.position="null") +
+      geom_text(aes(label = paste0(round(total/1000000, 1), "M"), hjust = -0.15)) +
+      coord_flip() +
+      scale_y_continuous(limits = c(0, max(name.pledged$total)/1000000 + 1))
+    
+    plot
+  })
 }
 
 # Run the application 

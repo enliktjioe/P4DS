@@ -76,6 +76,25 @@ ggplot(project.category, aes(x = main_category, y = count)) +
 Film & Video is the most popular project category in Kickstarter
 
 
+Sub-Category Analysis
+```{r}
+category.pledged <- ksdata %>% 
+        group_by(category) %>% 
+        summarize(total = sum(usd_pledged)) %>% 
+        arrange(desc(total))
+      
+      category.pledged$category <- factor(category.pledged$category, levels = category.pledged$category)
+      
+      plot2b <- ggplot(head(category.pledged, 10), aes(x = category, y = total / 1000000)) +
+        geom_bar(stat = "identity", aes(fill = category)) +
+        labs(title = "Top 10 - Total Amount Pledged by Sub Category", x = "Sub Category", y = "Amount Pledged in USD") +
+        theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(angle = 90, hjust = 1), legend.position="null") +
+        geom_text(aes(label = paste0(round(total/1000000, 1), "M")), vjust = -0.5)
+      
+      plot2b
+```
+
+
 # What types of projects were being funded?
 Top 20 highest funded projects
 ```{r}
