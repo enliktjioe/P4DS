@@ -3,10 +3,6 @@ title: "Algoritma Academy: Regression Models"
 author: "Samuel Chan"
 date: "Updated: January 31 2019"
 output: 
-  pdf_document:
-    latex_engine: xelatex
-    fig_caption: yes
-  fig_caption: yes
   html_document:
     toc: true
     toc_depth: 2
@@ -16,6 +12,10 @@ output:
     theme: flatly
     highlight: tango
     css: style.css
+  fig_caption: yes
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
 ---
 
 # Background {.tabset}
@@ -171,6 +171,27 @@ sum(resid(ols)^2)
 When I said "estimating a line", I hope it occurs to you that we're in fact estimating **two parameters**: the point at which our line cross the y-axis (known as the "intercept" term) and the slope degree (known as the "slope"). Collectively they're also referred to as **coefficients** (or "beta coefficients"), but really you should know they mean the same thing. For most machine learning models we created in R, we can use generic functions such as `summary()` and `predict()` to obtain more information about the model, or on new values, respectively. Let's try and apply `summary()` on the model we just created:
 ```{r}
 summary(ols)
+```
+
+
+CHALLENGE ACCEPTED: Buat linear model untuk memprediksi profit berdasarkan quantity
+1. lihat korelasinya
+2. buat scatterplot dan boxplot untuk melihat outlier
+3. buat linear modelnya
+4. periksa R-squared nya
+
+```{r}
+
+cor(copiers$Profit, copiers$Quantity)
+
+boxplot(copiers$Quantity)
+boxplot(copiers$Profit)
+plot(copiers$Quantity, copiers$Profit)
+
+model <- lm(Profit ~ Quantity, copiers)
+
+summary(model)
+
 ```
 
 From the output of the `summary()` call, we see the two coefficients that represent our regression line. The point at which our line crosses the y-intercept is -83.548 and the slope is 0.3944. The coefficient of the slope is estimated so as to minimize the vertical distance between the observed points (truth) and the prediction. Because predictions are rarely perfect, the distance between each of these points and are captured in an attribute named `residuals`. Hence, to get the five number summary of the `residuals`, we would call `fivenum(ols$residuals)` or equivalently `summary(ols$residuals)`. 
