@@ -3,6 +3,10 @@ title: "Algoritma Academy: Regression Models"
 author: "Samuel Chan"
 date: "Updated: January 31 2019"
 output: 
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
+  fig_caption: yes
   html_document:
     toc: true
     toc_depth: 2
@@ -12,10 +16,6 @@ output:
     theme: flatly
     highlight: tango
     css: style.css
-  fig_caption: yes
-  pdf_document:
-    latex_engine: xelatex
-    fig_caption: yes
 ---
 
 # Background {.tabset}
@@ -473,7 +473,7 @@ Question 3: What is the most fitting conclusion from the regression model above?
 
 ```{r}
 library(GGally)
-ggcorr(crime, label = T,label_size = 2.9)
+ggcorr(crime, label = T,label_size = 2.9, hjust = 1, layout.exp = 5)
 ```
 
 ```{r}
@@ -582,6 +582,13 @@ print("Adjusted R-Squared")
 summary(model1)$adj.r.squared
 summary(model2)$adj.r.squared
 summary(model3)$adj.r.squared
+```
+
+```{r}
+model4 <- lm(Profit ~ Sales + Quantity + Discount, copiers)
+summary(model4)
+model5 <- lm(Profit ~ Sales + Discount, copiers)
+summary(model5)
 ```
 
 `model1` has one predictor variable and has an R-squared of 0.7815 (adjusted R-squared of 0.7766). We see that by adding three additional predictors (`labor_participation`, `m_per1000f`, `time_prison`) the R-squared of our model increased to 0.7939 (`model3`). Now we say that R-squared indicates the quality of model fit, so does this necessarily means that `model3` is a better model than `model1`? Not really. In fact, by adding three additional parameters, our Adjusted R-Squared has decreased and returned a model that has a lower Adjusted R-squared than the two other models (despite built with more predictor variables). 
