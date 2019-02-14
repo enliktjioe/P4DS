@@ -457,7 +457,7 @@ summary(crime_mod)
 ### Graded Quizzes
 Question 1: Which of the following best described the slope?
 
-(A) - It's a **negative** slope, and is statistically **significant** (P-value lower than 0.05) 
+(A) - It's a **negative** slope, and is statistically **significant** (P-value lower than 0.05) **TRUE**
 (B) - It's a **positive** slope, and is statistically **significant** (P-value lower than 0.05)
 (C) - It's a **negative** slope, and is statistically **insignificant** (P-value higher than 0.05)
 (D) - It's a **positive** slope, and is statistically **insignificant** (P-value higher than 0.05)
@@ -466,8 +466,17 @@ Question 2: Given a GDP of 600, what would the inequality measure be? Use `predi
 
 Enter the predicted value (up to 2 decimal points, if any) into the input field. 
 
+```{r}
+predict(crime_mod, data.frame(gdp = 600))
+# B0 + B1X / Y = mx + c --> Rumus dari predict()
+386.03058 + -0.36551 * 600
+
+## Jawaban yang benar: 166.73
+```
+
+
 Question 3: What is the most fitting conclusion from the regression model above?  
-(A) - The R-squared approximates 0.78, indicating a reasonable fit (the closer to 1 the better) v
+(A) - The R-squared approximates 0.78, indicating a reasonable fit (the closer to 1 the better) **TRUE**
 (B) - The R-squared approximates 0.78, indicating a poor fit (the closer to 0 the better)  
 (C) - The R-squared does not tell us about the quality of our model fit. That is the job of the p-value. 
 
