@@ -1,0 +1,191 @@
+---
+title: "LBB Regression Models"
+author: "Enlik"
+date: "14 February 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+Data didapat dari: 
+[Kaggle](https://www.kaggle.com/mirichoi0218/insurance)
+
+# Library yang dibutuhkan
+```{r}
+library(magrittr)
+library(car)
+library(broom)
+library(ggplot2)
+library(MASS)
+```
+
+```{r}
+insurance <- read.csv("insurance.csv")
+summary(insurance)
+```
+
+```{r}
+lm.fit <- lm(formula = charges~., data = insurance)
+#Here '.' means we are using all the predictors in the dataset.
+summary(lm.fit)
+```
+
+```{r}
+lm.fit.sel <- lm(charges~age+bmi+children+smoker+region, data = insurance)
+```
+
+```{r}
+step.lm.fit <- stepAIC(lm.fit, direction = "both", trace = FALSE)
+```
+
+```{r}
+step.lm.fit$call
+
+lm(formula = charges ~ age + bmi + children + smoker + region, 
+    data = insurance)
+
+lm.fit.sel$call
+
+lm(formula = charges ~ age + bmi + children + smoker + region, 
+    data = insurance)
+```
+
+```{r}
+vif(step.lm.fit) %>% 
+  knitr::kable()
+```
+
+```{r}
+#type = "rstandard" draws a plot for standardized residuals
+residualPlot(step.lm.fit, type = "rstandard")
+```
+
+```{r, warning=FALSE}
+ceresPlots(step.lm.fit)
+```
+
+```{r, warning=FALSE}
+#update() can be used to update an existing model with new requirements
+step.lm.fit.new <- update(step.lm.fit, .~.+I(bmi^1.25))
+
+ceresPlots(step.lm.fit.new)
+```
+
+```{r}
+anova(step.lm.fit, step.lm.fit.new, test = "F")
+```
+
+```{r}
+residualPlot(step.lm.fit.new, type = "rstandard")
+```
+
+```{r}
+lm.fit1 <- update(step.lm.fit.new, ~ .+bmi*smoker)
+
+residualPlot(lm.fit1, type = "rstandard", id=TRUE)
+```
+
+```{r}
+anova(step.lm.fit.new, lm.fit1, test = "F")
+```
+
+```{r}
+summary(lm.fit1)$adj.r.squared
+```
+
+```{r}
+# non-constant error variance test
+ncvTest(lm.fit1)
+```
+
+```{r}
+yTransformer <- 0.8
+trans.lm.fit <- update(lm.fit1, charges^yTransformer~.)
+
+# non-constant error variance test
+ncvTest(trans.lm.fit)
+```
+
+```{r}
+residualPlot(trans.lm.fit, type = "rstandard", id=T)
+```
+
+```{r}
+set.seed(1)
+# Test for Autocorrelated Errors
+durbinWatsonTest(trans.lm.fit, max.lag = 5, reps=1000)
+```
+
+```{r}
+#function to plot fitted values vs actual values of charges
+fitted_vs_actual <- function(predictions, title){
+  ggplot(predictions, aes(x=insurance$charges, y=fit))+
+  geom_point()+
+  geom_smooth(aes(color = 'model'))+
+  geom_line(aes(x=seq(min(insurance$charges),max(insurance$charges), length.out = 1338), 
+                y=seq(min(insurance$charges),max(insurance$charges), length.out = 1338), 
+                color = 'ideal'))+
+  labs(x="actual charges", y="fitted values") + 
+  scale_color_manual('linear relation', values = c('red', 'blue')) +
+  theme(legend.position = c(0.25, 0.8))+
+    ggtitle(title)
+}
+
+#fitted values of initial model
+fitted_init <- predict(lm.fit, insurance, interval = "confidence") %>%
+  tidy()
+g1 <- fitted_vs_actual(fitted_init, "Initial Model")
+
+#fitted values of final model
+fitted_final <- predict(trans.lm.fit, insurance, 
+                             interval = "confidence")^(1/yTransformer) %>%
+  tidy()
+g2 <- fitted_vs_actual(fitted_final, "Final Model")
+
+#creating the two plots side-by-side
+gridExtra::grid.arrange(g1,g2, ncol = 2)
+```
+
+```{r}
+confint(trans.lm.fit) %>%
+  tidy() %>%
+  tibble::add_column(coefficients = trans.lm.fit$coefficients, .after = 2) %>%
+  knitr::kable()
+```
+
+```{r}
+#funtion to get model effects on transformed outcome
+plot_effect <- function(interaction, xpredictor){
+  #get effects for predictor
+  effs <- effects::effect(interaction, mod = trans.lm.fit, 
+                 xlevels = list(xpredictor=min(insurance[xpredictor]):max(insurance[xpredictor])))
+  
+  model.effs <- effs[c('x', 'lower', 'fit', 'upper')] %>%
+    as.data.frame()
+  
+  model.effs$fit <- model.effs$fit^(1/yTransformer)
+  model.effs$lower <- model.effs$lower^(1/yTransformer)
+  model.effs$upper <- model.effs$upper^(1/yTransformer)
+  
+  return(model.effs)
+}
+
+plot_effect('age', 'age') %>%
+  ggplot(aes(x = age, y = fit)) +
+  theme_bw()+
+  geom_line()+
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5)
+```
+
+```{r}
+plot_effect('bmi*smoker', 'bmi') %>%
+  ggplot(aes(x = x.bmi, y = fit)) +
+  facet_wrap(~x.smoker)+
+  theme_bw()+
+  geom_line()+
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5)
+```
+
