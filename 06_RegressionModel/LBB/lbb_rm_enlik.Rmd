@@ -9,183 +9,116 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Introduction
-Data didapat dari: 
-[Kaggle](https://www.kaggle.com/mirichoi0218/insurance)
+# What is Regression Analysis?
+In statistical modeling, regression analysis is a set of statistical processes for estimating the relationships among variables. It includes many techniques for modeling and analyzing several variables, when the focus is on the relationship between a dependent variable and one or more independent variables.
+[Wikipedia](https://en.wikipedia.org/wiki/Regression_analysis).
 
-# Library yang dibutuhkan
+One of the functions from regression analysis is to build prediction models.
+
+# Introduction
+This dataset (insurance) source was from [Kaggle](https://www.kaggle.com/mirichoi0218/insurance). It contains 1,338 observations and 7 variables:
+
+1. age
+2. sex
+3. bmi (Body Mass Index)
+4. children (Their Total Children)
+5. smoker
+6. region
+7. charges (Medical Charges)
+
+
+# Required Libraries
 ```{r}
-library(magrittr)
-library(car)
-library(broom)
-library(ggplot2)
 library(MASS)
+library(car)
 ```
 
+# Read data
 ```{r}
 insurance <- read.csv("insurance.csv")
+
+head(insurance)
 summary(insurance)
+table(insurance$children)
+
+hist(insurance$charges)
+boxplot(insurance$charges)
 ```
 
+From summary above, some simple observations that we've found are:
+
+1. Age range: 18-64 years old
+2. Male and female proportion almost balance 50:50
+3. BMI range: 15.96 to 53.13
+4. Most of them don't have children
+5. Smoker only around 25% of total
+
+
+# Are medical charges have any relationship with other variables?
+H0 = no relation between any predictors and the response (tested by F-statistic value). The p-value of F-statistic can be used to determine whether the H0 can be rejected or not.
+
+Here is multiple linear regression model using all the predictors:
 ```{r}
-lm.fit <- lm(formula = charges~., data = insurance)
-#Here '.' means we are using all the predictors in the dataset.
-summary(lm.fit)
+lm1 <- lm(formula = charges ~ ., data = insurance)
+summary(lm1)
+```
+A high value of F statistic (500.8), with a very low p-value (<2.2e-16) means there is a potential relationship between the predictors and the outcome.
+
+R-squared ($R^2$) measures the proportion of variability in the outcome that can be explained by the model, and is always between 0 and 1. The higher the value, the better the model is able to explain the variability in the outcome.
+
+
+# Validation of Regression Analysis
+## Which variables have a strong relation to "medical charges" variable?
+
+We will finding out if all or only some of the predictors are related to the outcome.
+
+Linear regression using the features with significant p-values only.
+```{r}
+lm1.sel <- lm(charges~age+bmi+children+smoker+region, data = insurance)
 ```
 
+Using `stepAIC()`, we will compare this to mixed selection, which is a combination of "forward"" and "backward" selection, to select the best model out of multiple models.
 ```{r}
-lm.fit.sel <- lm(charges~age+bmi+children+smoker+region, data = insurance)
+step1 <- stepAIC(lm1, direction = "both", trace = FALSE)
 ```
 
+## Compare Two Models
 ```{r}
-step.lm.fit <- stepAIC(lm.fit, direction = "both", trace = FALSE)
-```
-
-```{r}
-step.lm.fit$call
+step1$call
 
 lm(formula = charges ~ age + bmi + children + smoker + region, 
     data = insurance)
+```
 
-lm.fit.sel$call
+```{r}
+lm1.sel$call
 
 lm(formula = charges ~ age + bmi + children + smoker + region, 
     data = insurance)
 ```
+The model given by *stepwise* selection is same as the model we got by selecting the predictors with significant p-values.
 
+
+# Multicollinearity Assumption Checking
+Multicollinearity is a phenomenon when two or more predictors are highly related to each other, and then one predictor can be used to predict the value of the other predictor.
+
+Multicollinearity can be detected using the **Variance Inflation Factor (VIF)**.
+
+Usually, a VIF value of above 5 or 10 is taken as an indicator of multicollinearity.
+
+The simplest way of getting rid of multicollinearity in that case is to discard the predictor with high value of VIF.
 ```{r}
-vif(step.lm.fit) %>% 
-  knitr::kable()
+vif(step1)
 ```
+None of the predictors in this case has a high value of VIF. Because of that, we don’t need to worry about multicollinearity in our case.
 
+
+# Residual Plot
+Residual for any observation is the difference between the actual outcome and the fitted outcome as per the model.
 ```{r}
-#type = "rstandard" draws a plot for standardized residuals
-residualPlot(step.lm.fit, type = "rstandard")
+residualPlot(step1, type = "rstandard")
+summary(step1$residuals)
 ```
+The blue line means there is a smooth pattern between the fitted values and the standard residuals. The curve means slight non-linearity in this data.
 
-```{r, warning=FALSE}
-ceresPlots(step.lm.fit)
-```
-
-```{r, warning=FALSE}
-#update() can be used to update an existing model with new requirements
-step.lm.fit.new <- update(step.lm.fit, .~.+I(bmi^1.25))
-
-ceresPlots(step.lm.fit.new)
-```
-
-```{r}
-anova(step.lm.fit, step.lm.fit.new, test = "F")
-```
-
-```{r}
-residualPlot(step.lm.fit.new, type = "rstandard")
-```
-
-```{r}
-lm.fit1 <- update(step.lm.fit.new, ~ .+bmi*smoker)
-
-residualPlot(lm.fit1, type = "rstandard", id=TRUE)
-```
-
-```{r}
-anova(step.lm.fit.new, lm.fit1, test = "F")
-```
-
-```{r}
-summary(lm.fit1)$adj.r.squared
-```
-
-```{r}
-# non-constant error variance test
-ncvTest(lm.fit1)
-```
-
-```{r}
-yTransformer <- 0.8
-trans.lm.fit <- update(lm.fit1, charges^yTransformer~.)
-
-# non-constant error variance test
-ncvTest(trans.lm.fit)
-```
-
-```{r}
-residualPlot(trans.lm.fit, type = "rstandard", id=T)
-```
-
-```{r}
-set.seed(1)
-# Test for Autocorrelated Errors
-durbinWatsonTest(trans.lm.fit, max.lag = 5, reps=1000)
-```
-
-```{r}
-#function to plot fitted values vs actual values of charges
-fitted_vs_actual <- function(predictions, title){
-  ggplot(predictions, aes(x=insurance$charges, y=fit))+
-  geom_point()+
-  geom_smooth(aes(color = 'model'))+
-  geom_line(aes(x=seq(min(insurance$charges),max(insurance$charges), length.out = 1338), 
-                y=seq(min(insurance$charges),max(insurance$charges), length.out = 1338), 
-                color = 'ideal'))+
-  labs(x="actual charges", y="fitted values") + 
-  scale_color_manual('linear relation', values = c('red', 'blue')) +
-  theme(legend.position = c(0.25, 0.8))+
-    ggtitle(title)
-}
-
-#fitted values of initial model
-fitted_init <- predict(lm.fit, insurance, interval = "confidence") %>%
-  tidy()
-g1 <- fitted_vs_actual(fitted_init, "Initial Model")
-
-#fitted values of final model
-fitted_final <- predict(trans.lm.fit, insurance, 
-                             interval = "confidence")^(1/yTransformer) %>%
-  tidy()
-g2 <- fitted_vs_actual(fitted_final, "Final Model")
-
-#creating the two plots side-by-side
-gridExtra::grid.arrange(g1,g2, ncol = 2)
-```
-
-```{r}
-confint(trans.lm.fit) %>%
-  tidy() %>%
-  tibble::add_column(coefficients = trans.lm.fit$coefficients, .after = 2) %>%
-  knitr::kable()
-```
-
-```{r}
-#funtion to get model effects on transformed outcome
-plot_effect <- function(interaction, xpredictor){
-  #get effects for predictor
-  effs <- effects::effect(interaction, mod = trans.lm.fit, 
-                 xlevels = list(xpredictor=min(insurance[xpredictor]):max(insurance[xpredictor])))
-  
-  model.effs <- effs[c('x', 'lower', 'fit', 'upper')] %>%
-    as.data.frame()
-  
-  model.effs$fit <- model.effs$fit^(1/yTransformer)
-  model.effs$lower <- model.effs$lower^(1/yTransformer)
-  model.effs$upper <- model.effs$upper^(1/yTransformer)
-  
-  return(model.effs)
-}
-
-plot_effect('age', 'age') %>%
-  ggplot(aes(x = age, y = fit)) +
-  theme_bw()+
-  geom_line()+
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5)
-```
-
-```{r}
-plot_effect('bmi*smoker', 'bmi') %>%
-  ggplot(aes(x = x.bmi, y = fit)) +
-  facet_wrap(~x.smoker)+
-  theme_bw()+
-  geom_line()+
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.5)
-```
 
