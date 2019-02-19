@@ -38,12 +38,99 @@ prop.table(table(honors$hon))
 ```
 
 
-Logistic regression with no predictor variables
+## 2.6 Credit Risk Analysis / Modeling: Loans from Q4 2017
 ```{r}
-honors.legit <- 
+loans.s <- read.csv("data_input/loan2017Q4.csv")
+str(loans.s)
 ```
 
 ```{r}
+table(loans.s$not_paid)
+```
 
+```{r}
+summary(loans.s[loans.s$not_paid ==  0, "dti"])
+```
+
+```{r}
+summary(loans.s[loans.s$not_paid ==  1, "dti"])
+```
+
+```{r}
+xtabs(dti ~ purpose + not_paid, loans.s)
+```
+
+```{r}
+plot(xtabs(dti ~ grade + not_paid, loans.s), main = "Assigned Grade of Loan vs Default")
+```
+
+# 2.6.1 Cross-Validation and Out-of-Sample Error
+
+- Split our dataset into train and test sets
+- Build our machine learning model using data only from our train set
+- Obtain an unbiased measurement of the model’s accuracy by predicting on test set
+
+```{r}
+set.seed(417) #Q = kenapa harus 417?
+intrain <- sample(nrow(loans.s), nrow(loans.s)*0.8)
+loans.train <- loans.s[intrain, ]
+loans.test <- loans.s[-intrain, ]
+```
+
+We already know how to build a binomial logistic regression and learned the “manual” way of obtaining those coefficients in previous sections. Here we’ll cut to the chase and use glm for our model construction:
+```{r}
+creditrisk <- glm(not_paid ~ verified + purpose + installment + int_rate + home_ownership + grdCtoA + annual_inc, loans.train, family="binomial")
+summary(creditrisk)
+```
+
+Now let’s use the predict() function, specifying the:
+
+- Model to be used for prediction (creditrisk)
+- Dataset on which the model should predict (loans.test) 
+- A response type
+
+```{r}
+loans.test$pred.Risk <- predict(creditrisk, loans.test, type = "response")
+
+#We can verify that response in fact transform the scale of our prediction from odds to probabilities:
+predict(creditrisk, head(loans.test), type = "response")
+```
+
+```{r}
+predict(creditrisk, head(loans.test), type = "link")
+```
+
+```{r}
+predict(creditrisk, head(loans.test))
+```
+
+```{r}
+hist(loans.test$pred.Risk, breaks = 20)
+```
+
+```{r}
+loans.test[1:10, 15:17]
+```
+
+```{r}
+honors <- read.csv("data_input/sample.csv")
+str(honors)
+
+logModel <- glm(hon ~ female + read + math, honors, family = "binomial")
+newDF <- data.frame(female = c(0,1), read = c(55,55), math = c(45,45))
+
+summary(logModel)
+
+# ini adalah log of odds
+countLogOfOdds1 <- 0.97995 * 0 + 0.05906 * 55 + 0.12296 * 45 - 11.77025 # male
+countLogOfOdds2 <- 0.97995 * 1 + 0.05906 * 55 + 0.12296 * 45 - 11.77025 # female
+
+# pakai fungsi exp() untuk mengembalikan menjadi Odds
+exp(countLogOfOdds1) 
+exp(countLogOfOdds2)
+
+# oddRatio Female against Male
+exp(countLogOfOdds2) / exp(countLogOfOdds1)
+# Female more likely 2.664 times to get "HON" compare to Male
 ```
 
