@@ -1,0 +1,49 @@
+---
+title: "Learn C1"
+author: "Enlik"
+date: "18 February 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Campaign A
+round((0.45 / (1 - 0.45)), 2)
+```
+Odds kesuksesan campaign A
+
+
+```{r}
+# Campaign B
+round((0.4 / (1 - 0.4)), 2)
+```
+Odds kesuksesan campaign B
+
+```{r}
+0.67 / 0.82
+```
+
+
+# Learn by Module
+```{r}
+honors <- read.csv("data_input/sample.csv")
+summary(honors)
+
+honors$hon <- as.factor(honors$hon)
+prop.table(table(honors$hon))
+
+```
+
+
+Logistic regression with no predictor variables
+```{r}
+honors.legit <- 
+```
+
+```{r}
+
+```
+
