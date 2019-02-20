@@ -42,7 +42,20 @@ prop.table(table(honors$hon))
 ```{r}
 loans.s <- read.csv("data_input/loan2017Q4.csv")
 str(loans.s)
+
+# Lihat level bisa pakai levels() atau table()
+# levels(loans.s$purpose)
+# table(loans.s$purpose)
+
+summary(loans.s)
 ```
+
+```{r}
+loans.s$not_paid <- as.factor(loans.s$not_paid)
+loans.s$verified <- as.factor(loans.s$verified)
+GGally::ggcorr(loans.s, label = T,label_size = 2.9, hjust = 1, layout.exp = 5)
+```
+
 
 ```{r}
 table(loans.s$not_paid)
@@ -70,14 +83,21 @@ plot(xtabs(dti ~ grade + not_paid, loans.s), main = "Assigned Grade of Loan vs D
 - Build our machine learning model using data only from our train set
 - Obtain an unbiased measurement of the model’s accuracy by predicting on test set
 
+
+Apa itu set.seed()
 ```{r}
-set.seed(417) #Q = kenapa harus 417?
+set.seed(100)
+sample(1:50, 2)
+```
+
+```{r}
+set.seed(417) #Q = kenapa harus 417? -> supaya sama dengan modul, angka dalam set.seed tidak pengaruh banyak, kecuali untuk menyamakan data randomnya
 intrain <- sample(nrow(loans.s), nrow(loans.s)*0.8)
 loans.train <- loans.s[intrain, ]
 loans.test <- loans.s[-intrain, ]
 ```
 
-We already know how to build a binomial logistic regression and learned the “manual” way of obtaining those coefficients in previous sections. Here we’ll cut to the chase and use glm for our model construction:
+We already know how to build a binomial logistic regression and learned the **manual** way of obtaining those coefficients in previous sections. Here we’ll cut to the chase and use glm for our model construction:
 ```{r}
 creditrisk <- glm(not_paid ~ verified + purpose + installment + int_rate + home_ownership + grdCtoA + annual_inc, loans.train, family="binomial")
 summary(creditrisk)
@@ -91,6 +111,7 @@ Now let’s use the predict() function, specifying the:
 
 ```{r}
 loans.test$pred.Risk <- predict(creditrisk, loans.test, type = "response")
+# tambah type = "response" untuk mengganti log of odds menjadi probability
 
 #We can verify that response in fact transform the scale of our prediction from odds to probabilities:
 predict(creditrisk, head(loans.test), type = "response")
@@ -133,4 +154,85 @@ exp(countLogOfOdds2)
 exp(countLogOfOdds2) / exp(countLogOfOdds1)
 # Female more likely 2.664 times to get "HON" compare to Male
 ```
+
+
+
+
+
+
+
+
+### Exercise: Prediction Output
+As an exercise, are you able to append yet another variable (column) to the above dataframe. Name it `pred.not_paid` and make sure it's a binary (0 or 1). You can use `ifelse` for this task. 
+
+If you succeed in the above task, compare using `table()` the prediction you've made (`pred.not_paid`) against the "ground truth" which is in the `not_paid` variable.   
+```{r}
+table("predicted"=as.numeric(loans.test$pred.Risk>=0.5), "actual"=loans.test$not_paid)
+```
+This table above is also known as the **confusion matrix**. 
+
+Observe from the confusion matrix that: 
+- Out of the 151 actual defaults we classified 97 of them correctly  
+- Out of the 161 fully-paid loans we classified 93 of them correctly  
+- Out of the 312 cases of loans in our test set, we classified 190 of them correctly  
+
+## Evaluating Classifiers: Sensitivity, Specificity and Precision
+Sensitivity and specificity are metrics commonly used to measures the performance of a binary classification.  
+
+- Sensitivity (also called the true positive rate, the **recall**, or probability of detection in some fields) measures the proportion of positives that are correctly identified as such (cancer cell detection, email spam, insurance fraud etc)  
+- Specificity (also called the true negative rate) measures the proportion of negatives that are correctly identified as such (e.g. the percentage of healthy people who are correctly identified as not having the condition, legitimate emails identified as such, legitimate insurance claims)  
+- Precision: Proportion of correctly identified positives from all classified as such  
+- Accuracy: Proportion of correctly identified cases from all cases  
+
+![Source: Wikipedia](assets/sensitivity.png)
+
+Given the confusion matrix, can you describe the precision, recall, and accuracy of our model?
+```{r}
+table("predicted"=as.numeric(loans.test$pred.Risk>=0.5), "actual"=loans.test$not_paid)
+```
+
+##########################################################################################
+##
+##########################################################################################
+
+1. Read Data
+```{r}
+
+```
+
+2.
+```{r}
+
+```
+
+3.
+```{r}
+
+```
+
+4.
+```{r}
+
+```
+
+5. Split Train Test
+```{r}
+# Train Set
+wbcd_train <- wbcd_feature[1:469, ]
+
+# Train Label
+wbcd_train_labels <- wbcd_feature[1:469, "Diagnosis"]
+
+# Test Set
+wbcd_test <- wbcd_feature[470:569, ]
+
+# Test Label
+wbcd_test_labels <- wbcd_feature[470:569, "Diagnosis"]
+```
+
+6. Train the Model
+```{r}
+
+```
+
 

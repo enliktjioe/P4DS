@@ -608,6 +608,12 @@ loans.test[1:10, 15:17]
 ### Exercise: Prediction Output
 As an exercise, are you able to append yet another variable (column) to the above dataframe. Name it `pred.not_paid` and make sure it's a binary (0 or 1). You can use `ifelse` for this task. 
 
+```{r}
+loans.test$pred.not_paid <- ifelse(loans.test$pred.Risk >= 0.5, 1, 0)
+table("predicted" = loans.test$pred.not_paid, "actual" = loans.test$not_paid)
+```
+
+
 If you succeed in the above task, compare using `table()` the prediction you've made (`pred.not_paid`) against the "ground truth" which is in the `not_paid` variable.   
 ```{r}
 table("predicted"=as.numeric(loans.test$pred.Risk>=0.5), "actual"=loans.test$not_paid)
@@ -919,6 +925,10 @@ wbcd_pred <- knn(train = wbcd_train, test=wbcd_test, cl=wbcd_train_labels, k=21)
 Let's take a look at the prediction from our `wbcd_pred` model:
 ```{r}
 table(wbcd_pred)
+```
+
+```{r}
+table("actual" = wbcd_test_labels, "prediction" = wbcd_pred)
 ```
 
 We can modify the code above to obtain the Confusion Matrix, but let's take the opportunity to learn a new library. I'm going to use the `CrossTable()` function from the `gmodels` package so you'll have to install it if it wasn't already on your system:
