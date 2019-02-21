@@ -8,26 +8,39 @@ output:
 
 
 # Summmary
-This LBB for Logistic Regression will use `lbb_loans.csv` dataset for a credit risk case or `wholesale.csv` dataset for customer segment prediction case.
+This LBB for Logistic Regression will use `lbb_loans.csv` dataset for a credit risk case
 
 # Library
 ```{r, warning=FALSE}
-library(dplyr)
+# library(dplyr)
 ```
 
 
 # Read Data
 ```{r}
 loans <- read.csv("lbb_loans.csv")
-ws <- read.csv("data_input/wholesale.csv")
-
 str(loans)
-str(ws)
 ```
+
 
 ```{r}
 table(loans$not_paid)
 ```
+
+```{r}
+summary(loans[loans$not_paid == 0, "dti"])
+summary(loans[loans$not_paid == 1, "dti"])
+```
+
+```{r}
+xtabs(dti ~ purpose + not_paid, loans)
+```
+
+```{r}
+plot(xtabs(dti ~ grade + not_paid, loans), main = "Assigned Grade of Loan vs Default")
+```
+
+
 
 # Predicting Credit Risk from Loans
 ```{r}
@@ -35,7 +48,48 @@ set.seed(100)
 intrain <- sample(nrow(loans), nrow(loans) * 0.8)
 loans.train <- loans[intrain, ]
 loans.test <- loans[-intrain, ]
+```
 
-creditrisk <- glm(not_paid ~ )
+```{r}
+str(loans.train)
+creditrisk <- glm(not_paid ~ verified + purpose + installment + int_rate + home_ownership + grdCtoA + annual_inc, loans, family = "binomial")
+summary(creditrisk)
+```
+
+```{r}
+loans.test$pred.Risk <- predict(creditrisk, loans.test, type = "response")
+```
+
+```{r}
+predict(creditrisk, head(loans.test), type = "response")
+predict(creditrisk, head(loans.test), type = "link")
+predict(creditrisk, head(loans.test))
+```
+log-odds: //TODO
+odds: //TODO
+p/(1-p) = //TODO
+p = 0.490458/1.490458 = //TODO
+
+
+```{r}
+hist(loans.test$pred.Risk, breaks = 20)
+```
+
+```{r}
+loans.test[1:10, 15:17]
+```
+
+```{r}
+loans.test$pred.not_paid <- ifelse(loans.test$pred.Risk >= 0.5, 1, 0)
+table("predicted" = loans.test$pred.not_paid, "actual" = loans.test$not_paid)
+```
+
+Menghitung confusion matrix: 
+accuracy, precision, recall, specificity
+```{r}
+accu <- round((104+87)/nrow(loans.test), 2)
+prec <- round(87/(87+57), 2)
+
+paste("Accuracy:", accu)
 ```
 

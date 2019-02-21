@@ -1,0 +1,35 @@
+---
+title: "Quiz_C1"
+author: "Enlik"
+date: "21 February 2019"
+output: html_document
+---
+
+
+## 
+```{r}
+honors <- read.csv("data_input/sample.csv")
+str(honors)
+honors$hon <- as.factor(honors$hon)
+prop.table(table(honors$hon))
+```
+
+```{r}
+honors.logit4 <- glm(hon ~ math + female + read, data=honors, family="binomial") 
+summary(honors.logit4)
+```
+
+Q2
+```{r}
+exp(0.97995)
+```
+
+
+```{r}
+table(honors = honors$hon, female = honors$female)
+
+paste("Male:", (17/91)/(74/91))
+paste("Female:", (32/109)/(77/109))
+```
+
+

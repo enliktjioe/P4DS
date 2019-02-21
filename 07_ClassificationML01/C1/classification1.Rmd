@@ -972,7 +972,12 @@ You are provided some training datasets as part of the task. We would borrow fro
 # Read the dataset in, drop the "Region" feature because it's not interesting
 wholesale <- read.csv("data_input/wholesale.csv", header=TRUE)
 wholesale <- wholesale[,-2]
+str(wholesale)
 ```
+
+2 types of Industry
+Horeca = Hotel Restaurant Cafe
+Retail
 
 Let's convert the 'Channel' feature into 'Industry' and make it a factor.
 ```{r}
@@ -1001,11 +1006,20 @@ Let's split the dataset into train and test sets:
 # A quick head() shows that the data is shuffled so we don't end up generating a test set comprising of all horeca examples and 0 retail examples
 # But we can randomize the ordering if we're uncertain
 set.seed(10)
-wholesale.n <- wholesale.n[sample(nrow(wholesale.n)), ]
+wholesale.n1 <- wholesale.n[sample(nrow(wholesale.n)), ]
 # 80% train - 20% test
-wholesale_train <- wholesale.n[1:352, ]
-wholesale_test <- wholesale.n[353:440, ]
+wholesale_train <- wholesale.n1[1:352, ]
+wholesale_test <- wholesale.n1[353:440, ]
 table(wholesale_train$Industry)
+```
+
+```{r}
+horeca_pred <- class::knn(train = wholesale_train[,1:6],
+                   test=wholesale_test[,1:6],
+                   cl=wholesale_train$Industry,
+                   k=15)
+
+table("actual" = wholesale_test$Industry, "predicted" = horeca_pred)
 ```
 
 Instead of using the `knn()` function provided to us by the `class` package, we decided to be a little more ambitious. We decide to write this classifier from scratch! In example 2, when we call `knn()` the function takes care of the euclidean distance calculation for us, but we'll have to write our own here:
