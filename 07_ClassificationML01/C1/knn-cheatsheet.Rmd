@@ -1,0 +1,103 @@
+---
+title: "KNN Cheatsheet"
+subtitle: "Part of Algoritma Academy Classification 1"
+date: "20 February 2019"
+output: html_notebook
+---
+
+1. Read Data
+
+```{r}
+wbcd <- read.csv("data_input/wisc_bc_data.csv", stringsAsFactors = FALSE)
+str(wbcd)
+```
+
+2. Identify Label
+
+Factor
+
+```{r}
+wbcd$diagnosis <- factor(wbcd$diagnosis, levels = c("B", "M"), labels = c("Benign", "Malignant"))
+table(wbcd$diagnosis)
+```
+
+3. Identify feature
+
+```{r}
+wbcd_feature <- wbcd[,3:length(wbcd)]
+```
+
+4. Scaling / Normalize
+
+Let's create our normalize function:
+```{r}
+# Creating a normalize() function, which takes a vector x and for each value in that vector, subtracts the minimum value in x and divides by the range of x
+
+normalize <- function(x){
+  return ( 
+    (x - min(x))/(max(x) - min(x)) 
+           )
+}
+```
+
+```{r}
+wbcd_feature <- as.data.frame(lapply(wbcd_feature, normalize))
+```
+
+5. Split Train Test
+
+```{r}
+# Train Set
+wbcd_train <- wbcd_feature[1:469, ]
+
+# Train Label
+wbcd_train_labels <- wbcd[1:469,"diagnosis"]
+
+# Test Set
+wbcd_test <- wbcd_feature[470:569, ]
+
+# Test Label
+wbcd_test_labels <- wbcd[470:569,"diagnosis"]
+
+
+length(wbcd_train)
+?scale
+```
+
+6. Train the Model
+
+```{r}
+library(class)
+wbcd_pred <- knn(train = wbcd_train, test=wbcd_test, cl=wbcd_train_labels, k=21)
+```
+
+7. Create confusion matrix
+
+```{r}
+table("actual"= wbcd_test_labels, "prediction"=wbcd_pred)
+```
+
+8. Calculate matrices
+
+```{r}
+#Accuracy
+(61+37)/length(wbcd_test_labels)
+```
+
+```{r}
+# Precision
+37/37
+```
+
+```{r}
+#Recall
+37/(37+2)
+```
+
+
+
+
+
+
+
+

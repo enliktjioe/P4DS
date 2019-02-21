@@ -1,0 +1,41 @@
+---
+title: "LBB Classification1"
+author: "Enlik"
+date: "21 February 2019"
+output: 
+  html_document
+---
+
+
+# Summmary
+This LBB for Logistic Regression will use `lbb_loans.csv` dataset for a credit risk case or `wholesale.csv` dataset for customer segment prediction case.
+
+# Library
+```{r, warning=FALSE}
+library(dplyr)
+```
+
+
+# Read Data
+```{r}
+loans <- read.csv("lbb_loans.csv")
+ws <- read.csv("data_input/wholesale.csv")
+
+str(loans)
+str(ws)
+```
+
+```{r}
+table(loans$not_paid)
+```
+
+# Predicting Credit Risk from Loans
+```{r}
+set.seed(100)
+intrain <- sample(nrow(loans), nrow(loans) * 0.8)
+loans.train <- loans[intrain, ]
+loans.test <- loans[-intrain, ]
+
+creditrisk <- glm(not_paid ~ )
+```
+
