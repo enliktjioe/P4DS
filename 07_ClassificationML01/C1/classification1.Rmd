@@ -1157,6 +1157,12 @@ Student should receive 1 point for each of the above requirements, for a total o
 
 
 
+```{r}
+data1 <- read.csv("data_input/sample.csv")
+set.seed(218)
+idx <- sample(nrow(data1), nrow(data1) * 0.8)
 
+data1.train <- data1[idx,]
+data1.test <- data1[-idx,]
 
-
+```

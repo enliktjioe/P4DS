@@ -8,7 +8,7 @@ output:
 
 
 # Summmary
-This LBB for Logistic Regression will use `lbb_loans.csv` dataset for a credit risk case
+This LBB for Logistic Regression will use `wholesale.csv` dataset for customer segment prediction case
 
 # Library
 ```{r, warning=FALSE}
@@ -18,78 +18,87 @@ This LBB for Logistic Regression will use `lbb_loans.csv` dataset for a credit r
 
 # Read Data
 ```{r}
-loans <- read.csv("lbb_loans.csv")
-str(loans)
-```
-
-
-```{r}
-table(loans$not_paid)
+# Read the dataset in, drop the "Region" feature because it's not interesting
+wholesale <- read.csv("data_input/wholesale.csv", header=TRUE)
+wholesale <- wholesale[,-2]
+str(wholesale)
 ```
 
 ```{r}
-summary(loans[loans$not_paid == 0, "dti"])
-summary(loans[loans$not_paid == 1, "dti"])
+wholesale$Industry <- factor(wholesale$Channel, levels = c(1, 2), labels = c("horeca", "retail"))
+
+# After doing that we can remove the original Channel feature
+wholesale <- wholesale[,-1]
+table(wholesale$Industry)
 ```
 
 ```{r}
-xtabs(dti ~ purpose + not_paid, loans)
+wholesale.z <- as.data.frame(scale(wholesale[,-7]))
+summary(wholesale.z)
 ```
 
 ```{r}
-plot(xtabs(dti ~ grade + not_paid, loans), main = "Assigned Grade of Loan vs Default")
-```
-
-
-
-# Predicting Credit Risk from Loans
-```{r}
-set.seed(100)
-intrain <- sample(nrow(loans), nrow(loans) * 0.8)
-loans.train <- loans[intrain, ]
-loans.test <- loans[-intrain, ]
+wholesale.n <- as.data.frame(cbind(wholesale.z, Industry = wholesale$Industry))
+summary(wholesale.n)
 ```
 
 ```{r}
-str(loans.train)
-creditrisk <- glm(not_paid ~ verified + purpose + installment + int_rate + home_ownership + grdCtoA + annual_inc, loans, family = "binomial")
-summary(creditrisk)
+prop.table(table(wholesale.n$Industry))
 ```
 
 ```{r}
-loans.test$pred.Risk <- predict(creditrisk, loans.test, type = "response")
+set.seed(9999)
+intrain <- sample(nrow(wholesale.n), nrow(wholesale.n) * 0.8)
+wholesale.train <- wholesale.n[intrain, ]
+wholesale.test <- wholesale.n[-intrain, ]
 ```
 
 ```{r}
-predict(creditrisk, head(loans.test), type = "response")
-predict(creditrisk, head(loans.test), type = "link")
-predict(creditrisk, head(loans.test))
-```
-log-odds: //TODO
-odds: //TODO
-p/(1-p) = //TODO
-p = 0.490458/1.490458 = //TODO
+model1 <- glm(Industry ~ Fresh + Milk + Grocery + Frozen + Detergents_Paper + Delicassen, wholesale.n, family = "binomial")
 
-
-```{r}
-hist(loans.test$pred.Risk, breaks = 20)
+summary(model1)
 ```
 
 ```{r}
-loans.test[1:10, 15:17]
+wholesale.test$horeca_pred <- predict(model1, wholesale.test, type = "response")
+
 ```
 
 ```{r}
-loans.test$pred.not_paid <- ifelse(loans.test$pred.Risk >= 0.5, 1, 0)
-table("predicted" = loans.test$pred.not_paid, "actual" = loans.test$not_paid)
+predict(model1, head(wholesale.test), type = "response")
 ```
 
-Menghitung confusion matrix: 
-accuracy, precision, recall, specificity
 ```{r}
-accu <- round((104+87)/nrow(loans.test), 2)
-prec <- round(87/(87+57), 2)
+predict(model1, head(wholesale.test), type = "link")
+```
 
+```{r}
+predict(model1, head(wholesale.test))
+```
+
+```{r}
+hist(wholesale.test$horeca_pred, breaks = 20)
+```
+```{r}
+wholesale.test
+wholesale.test[1:40, 6:8]
+```
+
+```{r}
+wholesale.test$pred.isHoreca <- ifelse(wholesale.test$horeca_pred <= 0.5, 1, 0) 
+table("predicted" = wholesale.test$pred.isHoreca, "actual" = wholesale.test$Industry)
+```
+
+```{r}
+accu <- round((57+20)/nrow(wholesale.test), 2)
+reca <- round(57/(5+57), 2)
+prec <- round(57/(6+57), 2) 
+spec <- round(20/(20+6), 2)
+
+paste("Recall:", reca)
+paste("Precision:", prec)
+paste("Specificity:", spec)
 paste("Accuracy:", accu)
 ```
 
+//TODO KNN prediction method
