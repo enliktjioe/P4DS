@@ -2,18 +2,27 @@
 title: "LBB Classification1"
 author: "Enlik"
 date: "21 February 2019"
-output: 
-  html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 
 # Summmary
-This LBB for Logistic Regression will use `wholesale.csv` dataset for customer segment prediction case
+This is `Learning by Building` project for Classification I in Machine Learning. We will use `wholesale.csv` dataset for customer segment prediction case. 
 
-# Library
-```{r, warning=FALSE}
-# library(dplyr)
-```
+We will use two models:
+
+1. Logistic Regression Model using `glm()` function
+2. KNN Model using `knn()` function
+
+Following Question That I've tried to answer:
+
+- If you use a logistic regression, how do we correctly interpret the negative coefficients obtained from your logistic regression?
+- What is your accuracy? Was the logistic regression better than kNN in terms of accuracy? (recall the lesson on obtaining an unbiased estimate of the model’s accuracy)
+- Was the logistic regression better than our kNN model at explaining which of the variables are good predictors?
+- What are some strategies to improve your model?
+- List down 1 disadvantage and 1 strength of each of the approach (kNN and logistic regression)
 
 
 # Read Data
@@ -24,6 +33,7 @@ wholesale <- wholesale[,-2]
 str(wholesale)
 ```
 
+# Identify Label
 ```{r}
 wholesale$Industry <- factor(wholesale$Channel, levels = c(1, 2), labels = c("horeca", "retail"))
 
@@ -32,6 +42,7 @@ wholesale <- wholesale[,-1]
 table(wholesale$Industry)
 ```
 
+# Identify Feature And Scaling (Normalize)
 ```{r}
 wholesale.z <- as.data.frame(scale(wholesale[,-7]))
 summary(wholesale.z)
@@ -46,59 +57,151 @@ summary(wholesale.n)
 prop.table(table(wholesale.n$Industry))
 ```
 
+# Split Train and Test Set
 ```{r}
 set.seed(9999)
 intrain <- sample(nrow(wholesale.n), nrow(wholesale.n) * 0.8)
 wholesale.train <- wholesale.n[intrain, ]
 wholesale.test <- wholesale.n[-intrain, ]
+table(wholesale.train$Industry)
+```
+
+
+## Train with Logistic Regression Model
+```{r}
+logistic.model <- glm(Industry ~ Fresh + Milk + Grocery + Frozen + Detergents_Paper + Delicassen, wholesale.n, family = "binomial")
+
+summary(logistic.model)
 ```
 
 ```{r}
-model1 <- glm(Industry ~ Fresh + Milk + Grocery + Frozen + Detergents_Paper + Delicassen, wholesale.n, family = "binomial")
-
-summary(model1)
-```
-
-```{r}
-wholesale.test$horeca_pred <- predict(model1, wholesale.test, type = "response")
+wholesale.test$horeca_pred_logistic <- predict(logistic.model, wholesale.test, type = "response")
 
 ```
 
 ```{r}
-predict(model1, head(wholesale.test), type = "response")
+predict(logistic.model, head(wholesale.test), type = "response")
 ```
 
 ```{r}
-predict(model1, head(wholesale.test), type = "link")
+predict(logistic.model, head(wholesale.test), type = "link")
 ```
 
 ```{r}
-predict(model1, head(wholesale.test))
+predict(logistic.model, head(wholesale.test))
 ```
 
 ```{r}
 hist(wholesale.test$horeca_pred, breaks = 20)
 ```
-```{r}
-wholesale.test
-wholesale.test[1:40, 6:8]
-```
 
+# Create Confusion Matrix for Logistic Regression
 ```{r}
-wholesale.test$pred.isHoreca <- ifelse(wholesale.test$horeca_pred <= 0.5, 1, 0) 
+wholesale.test$pred.isHoreca <- ifelse(wholesale.test$horeca_pred_logistic <= 0.5, 1, 0) 
 table("predicted" = wholesale.test$pred.isHoreca, "actual" = wholesale.test$Industry)
 ```
 
+# Calculate matrices
 ```{r}
-accu <- round((57+20)/nrow(wholesale.test), 2)
-reca <- round(57/(5+57), 2)
-prec <- round(57/(6+57), 2) 
-spec <- round(20/(20+6), 2)
+accu.log <- round((57+20)/nrow(wholesale.test), 2)
+reca.log <- round(57/(5+57), 2)
+prec.log <- round(57/(6+57), 2) 
+spec.log <- round(20/(20+6), 2)
 
-paste("Recall:", reca)
-paste("Precision:", prec)
-paste("Specificity:", spec)
-paste("Accuracy:", accu)
+paste("Accuracy:", accu.log)
+paste("Recall:", reca.log)
+paste("Precision:", prec.log)
+paste("Specificity:", spec.log)
 ```
 
-//TODO KNN prediction method
+
+## Train with KNN Model
+```{r}
+require("class")
+horeca_pred_knn <- knn(train = wholesale.train[,1:6],
+                       test = wholesale.test[,1:6],
+                       cl = wholesale.train$Industry,
+                       k = 21)
+```
+
+# Create Confusion Matrix for Logistic Regression
+```{r}
+table("actual" = wholesale.test$Industry, "predicted" = horeca_pred_knn)
+```
+
+# Calculate matrices
+```{r}
+accu.knn <- round((55+22)/nrow(wholesale.test), 2)
+reca.knn <- round(55/(4+55), 2)
+prec.knn <- round(55/(7+55), 2) 
+spec.knn <- round(22/(22+7), 2)
+
+paste("Accuracy:", accu.knn)
+paste("Recall:", reca.knn)
+paste("Precision:", prec.knn)
+paste("Specificity:", spec.knn)
+
+```
+
+# Conclusion
+**Question:**
+If you use a logistic regression, how do we correctly interpret the negative coefficients obtained from your logistic regression?
+
+**Answer:**
+The coefficient tells us about how much the dependent variable is expected to increase (if the coefficient is positive) or decrease (if the coefficient is negative) when that independent variable increases by one
+
+**Question:**
+What is your accuracy? Was the logistic regression better than kNN in terms of accuracy? (recall the lesson on obtaining an unbiased estimate of the model’s accuracy)
+
+**Answer:**
+In my case, it's same.
+Logistic Regression:
+"Accuracy: 0.88"
+
+kNN:
+"Accuracy: 0.88"
+
+**Question:**
+What are some strategies to improve your model?
+
+**Answer:**
+
+- Testing multiple models
+- Applying feature engineering
+- Selecting features and examples
+- Looking for more data
+
+[Reference](https://www.dummies.com/programming/big-data/data-science/10-ways-improve-machine-learning-models/)
+
+
+**Question:**
+List down 1 disadvantage and 1 strength of each of the approach (kNN and logistic regression)
+
+**Answer:**
+kNN advantages:
+
+- Simple technique that is easily implemented
+- Building model is cheap
+- Extremely flexible classification scheme
+
+kNN disadvantages:
+
+- Classifying unknown records are relatively expensive
+- Accuracy can be severely degraded by the presence of noisy or irrelevant features
+
+
+Logistic Regression advantages:
+
+- It's very efficient and doesn't require too many computational resources
+- It's highly interpretable
+- It’s easy to regularize
+
+
+Logistic Regression disadvantages:
+
+- It can’t solve non-linear problems
+- Its high reliance on a proper presentation of your data, it means that logistic regression is not a useful tool unless you have already identified all the important independent variables
+- Can only predict a categorical outcome
+
+[Reference_1](www.cs.uvm.edu/~xwu/kdd/kNN-11.ppt)
+[Reference_2](https://machinelearning-blog.com/2018/04/23/logistic-regression-101/)
