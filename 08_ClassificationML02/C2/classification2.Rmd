@@ -467,6 +467,10 @@ sms_freq <- findFreqTerms(sms.dtm, 20)
 sms_freq[sample(length(sms_freq), 10)]
 ```
 
+```{r}
+
+```
+
 We'll then subset our DTM to get all the rows (corresponding to documents) but only include columns (terms) where it has appeared in at least 20 messages:
 ```{r}
 sms_train <- sms_train[,sms_freq]
@@ -478,9 +482,9 @@ Classical implementation of naive bayes in text classification usually see the c
 **Practice!**
 Can you complete the following function? The function should convert x **to a factor of 1 or 0** depending if its value is greater than or equal to one. 
 ```{r eval=F}
-bernoulli_conv <- function(x){
-  x <- __________
-}
+# bernoulli_conv <- function(x){
+#   x <- as.factor(ifelse(x>0, 1, 0))
+# }
 ```
 
 Try and evaluate the following code to see if your function worked!
@@ -558,11 +562,19 @@ From the confusion matrix above, try and answer the following questions.
 
 1. What is the Sensitivity (Recall) of your Spam Classifier?  
 Your Answer:  
+```{r}
+149/(149+26)
+```
+
 
 2. What is the Specificity of your Spam Classifier?  
 Your Answer: 
+```{r}
+1213/(1213+5)
+```
 
 3. Between minimizing False Positives and False Negatives, which is the more important one from a customer experience perspective? Argue your case. 
+`Minimize False Negatives`
 
 Because I am compelled to think that "legit sms being flagged as spam" is a more severe offence than the other way round, I'm going to hypothesized that more users would choose to let a small amount of spam messages slip through than an overly sensitive filter where legitimate messages are blocked.
 
@@ -696,6 +708,9 @@ Printing out the confusion matrix of our `votes_model` and obtaining an estimate
 ```{r}
 table("prediction"=votes_prediction, "actual"=votes.test$party)
 sum(votes_prediction == votes.test$party)/length(votes.test$party)
+
+library(caret)
+confusionMatrix(votes_prediction, votes.test$party)
 ```
 
 If you print the model (`print(votes_model)`) itself, you will find the a-priori probabilities as well as the conditional probabilities of each class ("?", "n" and "y") given a party affiliation. 
@@ -735,6 +750,14 @@ From the above exercises, we obtain by hand the a-priori probabilities and the c
 ```{r}
 votes_model
 ```
+```{r}
+#peluang Democrat watercost Y / hcapped N
+x <- 0.47 * 0.37 * 0.59 / ((0.47 * 0.37 * 0.59) + (0.45*0.81*0.40))
+# Democrat / Democrat + Republican
+x
+```
+
+
 
 # Decision Tree
 Decision trees and tree-based models are powerful, incredibly versatile and are is quite likely the single most popular choice for machine learning tasks. Their output are also a powerful form of representing rules, which has the benefit of being interpretable and adaptable to almost any scenario.  
