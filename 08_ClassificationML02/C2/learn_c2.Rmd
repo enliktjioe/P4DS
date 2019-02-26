@@ -1,0 +1,53 @@
+---
+title: "Learn C2"
+author: "Enlik"
+date: "25 February 2019"
+output: html_document
+---
+
+# Read Data
+```{r}
+sms <- read.csv("data_input/spam.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+str(sms)
+
+sms <- sms[,-c(3,4,5)]
+colnames(sms) <- c("label", "text")
+```
+
+```{r}
+library(tm)
+```
+
+```{r}
+# VCorpus requires a source object, which can be created using VectorSource
+sms.corpus <- VCorpus(VectorSource(sms$text))
+# Inspecting the first 2 items in our corpus:
+sms.corpus[[1]]$content
+```
+
+```{r}
+sms.corpus[[2]]$content
+```
+
+```{r}
+# convert all text to lower so YES == yes == Yes
+sms.corpus <- tm_map(sms.corpus, content_transformer(tolower)) 
+# Create a custom transformer to substitute punctuations with a space " "
+transformer <- content_transformer(function(x, pattern) {
+    gsub(pattern, " ", x)
+})
+
+# Remove numbers, stopwords ("am", "and", "or", "if")
+sms.corpus <- tm_map(sms.corpus, removeNumbers)
+sms.corpus <- tm_map(sms.corpus, removeWords, stopwords("english"))
+
+# Substitute ".", "/", "@" and common punctuations with a white space
+sms.corpus<- tm_map(sms.corpus, transformer, "/")
+sms.corpus <- tm_map(sms.corpus, transformer, "@")
+sms.corpus <- tm_map(sms.corpus, transformer, "-")
+sms.corpus <- tm_map(sms.corpus, transformer, "\\.")
+
+# For all other punctuations, simply strip them using the built-in function
+sms.corpus.new <- tm_map(sms.corpus, removePunctuation)
+```
+
