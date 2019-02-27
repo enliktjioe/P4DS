@@ -51,3 +51,41 @@ sms.corpus <- tm_map(sms.corpus, transformer, "\\.")
 sms.corpus.new <- tm_map(sms.corpus, removePunctuation)
 ```
 
+
+
+## Decision Tree
+```{r}
+dat <- read.table(text ="
+    Outlook Temp Humidity Windy Play
+1     Sunny  Hot     High FALSE   No
+2     Sunny  Hot     High  TRUE   No
+3  Overcast  Hot     High FALSE  Yes
+4     Rainy Mild     High FALSE  Yes
+5     Rainy Cool   Normal FALSE  Yes
+6     Rainy Cool   Normal  TRUE   No
+7  Overcast Cool   Normal  TRUE  Yes
+8     Sunny Mild     High FALSE   No
+9     Sunny Cool   Normal FALSE  Yes
+10    Rainy Mild   Normal FALSE  Yes
+11    Sunny Mild   Normal  TRUE  Yes
+12 Overcast Mild     High  TRUE  Yes
+13 Overcast  Hot   Normal FALSE  Yes
+14    Rainy Mild     High  TRUE   No",
+                  stringsAsFactors = T)
+dat$Windy <- as.factor(dat$Windy)
+
+str(dat)
+```
+
+```{r}
+round(prop.table(table(dat$Play)), 2)
+```
+
+```{r}
+-0.36 * log2(0.36) - 0.64 * log2(0.64)
+```
+
+```{r}
+table()
+```
+

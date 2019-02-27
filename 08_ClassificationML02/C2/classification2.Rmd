@@ -850,10 +850,19 @@ diab_test <- diabetes[-in_diabetes_train, ]
 ```
 
 Creating our decision tree
-```{r fig.width=6}
+```{r fig.width=10}
 diab_model <- ctree(diabetes ~ ., diab_train)
-plot(diab_model)
-plot(diab_model, type="simple")
+diab_model_def <- ctree(diabetes ~ ., diab_train)
+plot(diab_model_def)
+plot(diab_model_def, type="simple")
+
+pred_diab_def_train <- predict(diab_model_def, newdata = diab_train)
+pred_diab_def_test <- predict(diab_model_def, newdata = diab_test)
+summary(pred_diab_def_train)
+summary(pred_diab_def_test)
+
+caret::confusionMatrix(pred_diab_def_train, diab_train[,9]) # column 9 = Diabetes
+caret::confusionMatrix(pred_diab_def_test, diab_test[,9]) # column 9 = Diabetes
 ```
 
 **Discussion**
@@ -920,7 +929,7 @@ In machine learning, Bayes rule and bayesian methods are used frequently, from b
 One interesting and highly useful technique to evaluate predictive models is called the Cross-Validation K-fold. What it does is partition our original dataset into _k_ equal-sized samples (say we call them 'bins'). Of these smaller bins, a single one of them is used as the test set and the remaining _k-1_ bins used as training data. This process is repeated for _k_ times (the folds) so each bin is used exactly once as the test set. The obvious benefit of this technique is that all observations are used as both training and test sets. 
 
 ```{r eval=FALSE}
-# library(animation)
+library(animation)
 ani.options(interval = 1, nmax = 15)
 cv.ani(main = "Demonstration of the k-fold Cross Validation", 
   bty = "l")
