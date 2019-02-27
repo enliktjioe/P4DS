@@ -75,38 +75,53 @@ summary(logistic.model)
 ```
 
 ```{r}
-wholesale.test$horeca_pred_logistic <- predict(logistic.model, wholesale.test, type = "response")
+step(logistic.model, direction = "backward")
+```
+
+```{r}
+logistic.model2 <-  glm(formula = Industry ~ Grocery + Frozen + Detergents_Paper, 
+    family = "binomial", data = wholesale.n)
+
+summary(logistic.model2)
+```
+
+```{r}
+wholesale.test$horeca_pred_logistic <- predict(logistic.model2, wholesale.test, type = "response")
 
 ```
 
 ```{r}
-predict(logistic.model, head(wholesale.test), type = "response")
+predict(logistic.model2, head(wholesale.test), type = "response") # Probability
 ```
 
 ```{r}
-predict(logistic.model, head(wholesale.test), type = "link")
+predict(logistic.model2, head(wholesale.test), type = "link") #Log of Odds
 ```
 
 ```{r}
-predict(logistic.model, head(wholesale.test))
+predict(logistic.model2, head(wholesale.test)) #Log of Odds (link)
 ```
 
 ```{r}
-hist(wholesale.test$horeca_pred, breaks = 20)
+hist(wholesale.test$horeca_pred_logistic, breaks = 20)
+# Model cenderung memprediksi di sekitar probability < 0.2
 ```
 
 # Create Confusion Matrix for Logistic Regression
 ```{r}
-wholesale.test$pred.isHoreca <- ifelse(wholesale.test$horeca_pred_logistic <= 0.5, 1, 0) 
+wholesale.test$pred.isHoreca <- as.factor(ifelse(wholesale.test$horeca_pred_logistic <= 0.5, "horeca", "retail"))
 table("predicted" = wholesale.test$pred.isHoreca, "actual" = wholesale.test$Industry)
+table(wholesale.test$Industry)
 ```
 
 # Calculate matrices
 ```{r}
-accu.log <- round((57+20)/nrow(wholesale.test), 2)
-reca.log <- round(57/(5+57), 2)
-prec.log <- round(57/(6+57), 2) 
-spec.log <- round(20/(20+6), 2)
+caret::confusionMatrix(as.factor(wholesale.test$Industry), wholesale.test$pred.isHoreca)
+
+accu.log <- round((57+20)/nrow(wholesale.test), 4)
+reca.log <- round(57/(5+57), 4)
+prec.log <- round(57/(6+57), 4)
+spec.log <- round(20/(20+6), 4)
 
 paste("Accuracy:", accu.log)
 paste("Recall:", reca.log)
@@ -122,6 +137,7 @@ horeca_pred_knn <- knn(train = wholesale.train[,1:6],
                        test = wholesale.test[,1:6],
                        cl = wholesale.train$Industry,
                        k = 21)
+nrow(wholesale.test)
 ```
 
 # Create Confusion Matrix for Logistic Regression
