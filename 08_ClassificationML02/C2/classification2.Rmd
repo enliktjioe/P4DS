@@ -1001,7 +1001,7 @@ I'm going to go ahead now and create our Random Forest, using a 5-Fold Cross Val
 The following chunk is set with the parameter `eval=F` because it may be time-consuming. You can try and repeat this exercise at home, but feel free to skip ahead to the next chunk where I've read my pre-built model into the workspace (and thus saving precious time):
 ```{r eval=F}
 set.seed(417)
-ctrl <- trainControl(method="repeatedcv", number=5, repeats=3)
+ctrl <- trainControl(method="repeatedcv", number=5, repeats=3) # method = "repeatedcv" artinya repeated Cross Validation
 fb_forest <- train(classe ~ ., data=fb_train, method="rf", trControl = ctrl)
 ```
 
@@ -1009,6 +1009,8 @@ Read `fb_forest.RDS`, which is the `fb_forest` I created above:
 ```{r}
 fb_forest <-readRDS("fb_forest.RDS")
 fb_forest
+
+varImp(fb_forest) # Menentukan variable yang paling penting (sering muncul di node)
 ```
 
 From the above summary, we learn that the random forest have tried different values of `mtry`. This refers to the number of variables available for splitting at each tree node. Where in the case of a standard decision tree, all variables are considered at each point of splitting - this is not the case in random forest. Under a random forest model, each split in a particular tree would consider `mtry` amount of variables from the set of predictors available. At each split, a different random set of variables are selected as candidate before the tree assess the "purity" (or information gain) it can obtain from the candidate set and thus split it with that variable. 
