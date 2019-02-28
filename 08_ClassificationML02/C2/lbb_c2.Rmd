@@ -1,0 +1,21 @@
+---
+title: "LBB Classification in Machine Learning 2"
+author: "Enlik"
+date: "28 February 2019"
+output: html_document
+---
+
+# Introduction
+Use any of the 3 classification algorithms you’ve learned to predict the risk status of a bank loan. The variable *default* in the dataset indicates whether the applicant did default on the loan issued by the bank. Start by reading the loan.csv dataset in, a dataset that is originally from Professor Dr. Hans Hofmann:
+
+DEFAULT = FAILURE
+Artinya gagal bayar loan
+```{r}
+loans <- read.csv("data_input/loan.csv")
+str(loans)
+```
+
+```{r}
+
+```
+
