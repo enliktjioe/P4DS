@@ -1,0 +1,624 @@
+---
+title: "Coretan C2"
+author: "Ahmad Husain Abdullah"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+    theme: architect
+    highlight: github
+---
+
+# Naive Bayes
+
+## Law of Probability
+
+Probabilitas dua buah peristiwa terjadi. 
+
+Independent Event: Kejadian saling bebas. Artinya, kemungkinan terjadi A tidak dipengaruhi oleh kejadian B. <br>
+- Cuaca cerah dan tim sepak bola memenangkan pertandingan berikutnya. 
+- Kemungkinan Arsenal menang, dan Persija Jakarta Menang.
+- Perusahaan merekrut office boy baru, Perusahaan menaikkan gaji karyawan.
+
+
+Dependent Event: Kejadian saling terikat. Artinya, kemungkinan terjadi A dipengaruhi oleh kejadian B. <br>.
+- Mesut Ozil main, Arsenal memenangkan pertandingan.
+- Cuaca cerah, Wisatawan berjemur di pantai.
+
+Diskusi:
+
+Event 1: Perusahaan mengalami downsizing (pengurangan jumlah karyawan) lebih dari 50% (2% kemungkinannya)
+Event 2: Deklarasi kebangkrutan (3% kemungkinan)
+
+Contoh diatas adalah peristiwa dependent.
+
+Event 1: Perusahaan merekrut manajer sales baru. (30% kemungkinan)
+Event 2: Perusahaan memperkejakan akuntan tambahan. (40% kemungkinan)
+
+Contoh diatas adalah peristiwa independent. 
+
+Diskusi: 
+
+1. Untuk menghitung probabilitas kedua buah peristiwa independent terjadi bersamaan, kita dapat menggunakan rumus $P(A \cap B) = P(A) . P(B)$. Berarti jika ditanya probabilitas Perusahaan merekrut manajer sales baru, dan memperkejakan akuntan tambahan di tahunn depan secara bersamaan adalah $0.3 * 0.4 = 0.12$ 
+
+2. Untuk kasus peristiwa dependent, kita tidak dapat menggunakan konsep perkalian untuk menghitung probabilitasnya. Untuk menghitung probabilitasnya kita harus menggunakan konsep bayes. Dimana kita harus memperhitungkan peluang gabungan kedua peristiwa dependent terjadi (joint probability).
+
+## Conditional Probability Bayes's Theorem
+
+Rumus peluang bersyarat:
+
+$P(A|B)=\frac{P(A \cap B)}{P(B)}$
+
+Dimana: <br>
+$P(A \cap B)$ = Seberapa sering peristiwa A dan B terjadi bersamaan. 
+$P(B)$ = seberapa sering peristiwa B terjadi secara general.
+
+Rumus diatas akan di transformasi menjadi:
+
+$P(A|B)= \frac{P(B|A)*P(A)}{P(B)}$
+
+Studi Kasus: <br>
+Deteksi email spam diketahui:
+Saya mempunyai 500 email, 100 email tersebut adalah spam. dari 500 email tersebut 5 email mengandung kata "lottery". dan 4 email diantaranya adalah spam. <br>
+
+N = 500 <br>
+P(spam) = 100/500 = 0.2 <br>
+P(ham) = 400/500 = 0.8 <br>
+P(lottery) = 5/500 = 0.01 <br>
+P(lottery|spam) = 4/100 = 0.04 <br>
+P(lottery|ham) = 1/400 = 0.0025 <br>
+
+*Prior Probability* : Dari contoh spam deteksi diatas, misal kita tidak mengetahui konten email nya apakah mengandung "lottery" atau tidak. Bagaimana kita mengestimasi kemungkinan terjadi spam pada email kita? Kita akan bilang sekitar 20%. $P(spam) = \frac{100}{500} = 0.2$.
+
+*Prior Probability* : Probabilitas sebuah peristiwa (spam) terjadi sebelum diberikan beberapa syarat lain (given conditional probabilty). <br>
+
+*Likelihood* : Dari contoh spam deteksi diatas, saya ingin tahu dari data historis, probabilitas kata "lottery" muncul dengan syarat (given) bahwa dia itu spam adalah $P(lottery|spam) = \frac{4}{100} = 0.04$. Berarti saya bisa bilang, dari data historis email saya, probabilitas muncul "Lottery" dengan syarat dia masuk spam adalah sebesar 4%.
+
+*Likelihood* : 
+
+*Marginal Probability* : Probabilitas kata "lottery" muncul di seluruh email adalah. $P(lottery)=P(lottery|Spam) * P(spam) + P(lottery|ham) * P(ham)$ maka akan diperoleh hasil $(\frac{4}{100}*\frac{100}{500}) + (\frac{1}{400}*\frac{400}{500}) = \frac{5}{500} = 0.01$. Berarti dikasus ini saya bisa bilang probabilitas muncul kata "lottery" di seluruh email adalah 1%.
+
+*Marginal Probability* : Probabilitas sebuah syarat peristiwa muncul secara general. <br>
+
+*Posterior Probability* : Peluang email spam bila mengandung kata "lottery" adalah $P(spam|lottery) = \frac{P(lottery|spam)*P(spam)}{P(lottery)} = \frac {0.04*0.2}{0.01} = $
+
+
+## Characteristic Naive Bayes
+
+1. Mengasumsikan semua atribut pada dataset itu sama pentingnya dan independen. <br>
+2. Skewness due to data scarcity
+misal saya punya 1 email yang mengandung kata "prince" dan email tersebut adalah spam. maka kalau ada email lain yg mengandung kata "prince" email tersebut akan otomatis masuk spam. 
+
+
+
+## Bayes Theorem Application: Customer Churn
+
+400 customers <br>
+40 churned, 360 tidak <br>
+6 dari 40 customers yg churned menggunakan kata "terrible" pada surat pernyataan <br>
+2 dari 360 customers yg tidak churned menggunakan kata "terrible" pada surat pernyataan <br>
+
+P(Churn| Terrible) = P(Terrible | Churn) * P(Churn) / P(Terrible)
+				   = 6/40 * 40/400 / 8/400
+				   = 0.15 * 0.1 / 0.02
+				   = 0.75
+				   
+1000 customers <br>
+250 of 1000 churned; 750 of them did not <br>
+45 of the 250 churned customers use the word “terrible” (t) in their last correspondence; While only 11 of the 750 stayed customer used it <br>
+5 of the 250 churned customers use the word “recommended” (r)in their last correspondence; While 155 of the 750 stayed customer used it <br>
+85 of the 250 churned customers sent the email during the 23:59 to 06:00 period (m); While 156 of the 750 stayed customer sent it inside that period <br>
+
+misal ada seorang customers bernama Husain pada correspondance terakhirnya dia menggunakan kata terrible, tidak menggunakan kata recommended dan mengirim email pada pukul 16:40 <br>
+
+berapa peluang husain akan churn?
+
+
+
+
+## Laplace Estimator
+
+permasalahan dari naive bayes adalah ketika kita mendapatkan 0 kejadian pada suatu kelas yang dapat membuat nilai peluang kita menjadi 0 pada kelas tersebut. ada beberapa pendekatan yang bisa kita lakukan seperti
+
+1. Menghapus variabel yang mengandung 0 <br>
+   Resiko: kita kehilangan bayak informasi, karena kita harus remove 1 variable <br>
+
+2. mengabaikan variabel yang mengandung 0 <br>
+   Resiko : peluang suatu kelas akan menjadi 0 terus <br>
+
+3. menambahkan nilai kecil (1) untuk setiap kejadian. (terbaik) <br>
+
+Fungsi dari lapcate estimator ini untuk menghindari nilai 0. <br>
+
+## Spam Classifier
+
+```{r}
+sms <- read.csv("data_input/spam.csv", stringsAsFactors = FALSE, encoding = "UTF-8")
+str(sms)
+```
+
+```{r}
+set.seed(100)
+library(dplyr)
+sms <- sms %>% 
+  select("label" = v1, "text" = v2) %>% 
+  mutate("label" = as.factor(label))
+
+sms[sample(nrow(sms), 10),"text"]
+```
+
+Text mining dengan packagase `tm`:
+
+1. Read dataset
+2. Convert data teks ke bentuk corpus.
+3. Pra-proses data teks.
+   - tolower
+   - remove tanda baca
+   - remove angka
+   - dll.
+4. Stemming. (Transformasi teks ke bentuk kata dasar)
+5. Tokenization (Document Term Matrix)
+6. Creat Model
+7. Evaluasi
+
+
+```{r}
+library(tm)
+```
+
+```{r}
+# VCorpus requires a source object, which can be created using VectorSource
+sms.corpus <- VCorpus(VectorSource(sms$text))
+# Inspecting the first 2 items in our corpus:
+sms.corpus[[1]]$content
+sms.corpus[[2]]$content
+```
+
+
+```{r}
+ # convert all text to lower so YES == yes == Yes
+sms.corpus <- tm_map(sms.corpus, content_transformer(tolower)) 
+# Create a custom transformer to substitute punctuations with a space " "
+transformer <- content_transformer(function(x, pattern) {
+    gsub(pattern, " ", x)
+})
+
+# Remove numbers, stopwords ("am", "and", "or", "if")
+sms.corpus <- tm_map(sms.corpus, removeNumbers)
+sms.corpus <- tm_map(sms.corpus, removeWords, stopwords("english"))
+
+# Substitute ".", "/", "@" and common punctuations with a white space
+sms.corpus<- tm_map(sms.corpus, transformer, "/")
+sms.corpus <- tm_map(sms.corpus, transformer, "@")
+sms.corpus <- tm_map(sms.corpus, transformer, "-")
+sms.corpus <- tm_map(sms.corpus, transformer, "\\.")
+
+# For all other punctuations, simply strip them using the built-in function
+sms.corpus.new <- tm_map(sms.corpus, removePunctuation)
+```
+
+```{r}
+# see how stemming works
+library(SnowballC)
+wordStem(c("do", "doing", "kiss", "kisses", "kissing"))
+```
+
+```{r}
+sms.corpus.new <- tm_map(sms.corpus.new, stemDocument)
+sms.corpus.new <- tm_map(sms.corpus.new, stripWhitespace)
+```
+
+```{r}
+sms.dtm <- DocumentTermMatrix(sms.corpus.new)
+#Examine our dtm
+inspect(sms.dtm)
+```
+
+
+```{r}
+findFreqTerms(sms.dtm, 300)
+```
+
+
+```{r}
+set.seed(100)
+split_75 <- sample(nrow(sms.dtm), nrow(sms.dtm)*0.75)
+sms_train <- sms.dtm[split_75, ]
+sms_test <- sms.dtm[-split_75, ]
+```
+
+```{r}
+train_labels <- sms[split_75, 1]
+test_labels <- sms[-split_75, 1]
+```
+
+```{r}
+prop.table(table(train_labels))
+```
+
+```{r}
+prop.table(table(test_labels))
+```
+
+```{r}
+set.seed(100)
+sms_freq <- findFreqTerms(sms.dtm, 20)
+# take a look at some of the words that will be used as predictors in our classifier:
+sms_freq[sample(length(sms_freq), 10)]
+```
+
+```{r}
+sms_train <- sms_train[,sms_freq]
+sms_test <- sms_test[,sms_freq]
+```
+
+```{r}
+# Takes an input, "x" and assign x to a 1 or 0
+bernoulli_conv <- function(x){
+        x <- as.factor(as.numeric(x > 0))
+}
+```
+
+```{r}
+train_bn <- apply(sms_train, 2, bernoulli_conv)
+test_bn <- apply(sms_test, 2, bernoulli_conv)
+```
+
+
+```{r}
+set.seed(100)
+train_bn[1:6,sample(ncol(train_bn), 10)]
+```
+
+```{r}
+head(train_bn[train_bn[,4] == "1" | train_bn[,5] == "1", 1:7])
+```
+
+```{r}
+ncol(sms_train);ncol(sms_test)
+```
+
+```{r}
+sum(dimnames(sms_train)$Terms == dimnames(sms_test)$Terms)
+```
+
+```{r}
+num_train <- colSums(apply(train_bn, 2, as.numeric))
+num_test <- colSums(apply(test_bn, 2, as.numeric))
+
+num_train[num_train < 3]
+```
+
+```{r}
+num_test[num_test < 3]
+```
+
+```{r}
+library(e1071)
+```
+
+```{r}
+spam_model <- naiveBayes(train_bn, train_labels, laplace = 1)
+```
+
+```{r}
+spam_prediction <- predict(spam_model, test_bn)
+```
+
+```{r}
+table(prediction = spam_prediction, actual=test_labels)
+```
+
+```{r}
+sum(spam_prediction == test_labels)/length(test_labels)*100
+```
+
+```{r}
+inspect(sms_test[test_labels == "ham" & spam_prediction != test_labels,])
+```
+
+```{r}
+sms[c(1497, 1506, 2379, 4801, 5168),2]
+```
+
+### roc
+
+cara lain kita untuk melihat model performence. menggambarkan seberapa besar TP dan FP. Kita bisa lihat sebaik apa luar kurva dibawah nya atau yg biasa disebut dengan AUC.. AUC rangenya dari 0-1. 
+
+```{r}
+spam_prediction_raw <- predict(spam_model, test_bn, type = "raw")
+head(spam_prediction_raw)
+```
+
+```{r}
+predict(spam_model, newdata = test_bn, type = "class", threshold = 0.001) %>% 
+  head()
+```
+
+
+```{r}
+spam_df <- data.frame("prediction"=spam_prediction_raw[,2], "trueclass"=as.numeric(test_labels=="spam"))
+head(spam_df)
+```
+
+```{r}
+library(ROCR)
+```
+
+```{r}
+spam_roc <- ROCR::prediction(spam_df$prediction, spam_df$trueclass)  
+plot(performance(spam_roc, "tpr", "fpr"),colorize = TRUE)
+```
+
+
+```{r}
+auc_value <- performance(spam_roc, measure = "auc")
+auc_value@y.values[[1]]
+```
+
+AUC: Area Under the Curve = 0.98. artinya model sudah cukup baik memprediksi kelas positif dan kelas negatif. Cocok digunakan ketika ada label yang tidak seimbang (unbalance).
+
+```{r}
+prop.table(table(sms$label))
+```
+
+
+## Predicting votes
+
+```{r}
+votes <- read.csv("data_input/votes.txt")
+head(votes)
+```
+
+```{r}
+names(votes) <- c("party", 
+                  "hcapped_infants",
+                  "watercost_sharing", 
+                  "adoption_budget_reso",
+                  "physfee_freeze",
+                  "elsalvador_aid",
+                  "religious_grps",
+                  "antisatellite_ban",
+                  "nicaraguan_contras",
+                  "mxmissile",
+                  "immigration",
+                  "synfuels_cutback",
+                  "education_funding",
+                  "superfundright_sue",
+                  "crime",
+                  "dutyfree_exps",
+                  "expadmin_southafr"
+                  )
+```
+
+```{r}
+table(votes$party, votes$hcapped_infants)
+```
+
+```{r}
+plot(votes$party, votes$nicaraguan_contras)
+```
+
+```{r}
+set.seed(100)
+split_votes <- sample(nrow(votes), nrow(votes)*0.75)
+votes.train <- votes[split_votes, ]
+votes.test <- votes[-split_votes, ]
+```
+
+```{r}
+votes_model <- naiveBayes(party ~ ., votes.train)
+votes_prediction <- predict(votes_model, votes.test)
+```
+
+```{r}
+table("prediction"=votes_prediction, "actual"=votes.test$party)
+```
+
+```{r}
+sum(votes_prediction == votes.test$party)/length(votes.test$party)
+```
+
+```{r}
+prop.table(table(votes.train$party))
+```
+
+```{r}
+# Loop over all attribute variables in the dataset (v1, v2 ... vn) and create cross-classifying table against the class variable 
+# 1st loop: table(hcapped_infants, class)
+# 2nd loop: table(watercost_sharing, class)
+# ... 17th loop: table(expadmin_southafr, class)
+
+freqtable.votes <- lapply(votes.train[,c(2:17)], table, votes.train[,1]) 
+
+# freqtable.votes is now a List of 9 tables. 
+# each table has variable v as row, and one column for each of the class variable (possible outcome)
+
+freqtable.bc <- lapply(freqtable.votes, t)
+freqtable.bc$hcapped_infants
+```
+
+```{r}
+paste("A-Priori Probabiltiies:")
+```
+
+
+# Decision Tree
+
+Pada proses bisnis, decision tree salah satu model yg paling sering digunakan, karna model nya itu mudah diinterpretasikan untuk orang yg non teknis, jadi setelah model ini jadi, dia itu membuatkan sebuah step of rules. jadi konsep di decision tree ingin mencarikan rules apa aja yang kalo misal kita tanyakan ke data kita bisa memotong motong dan membuat data kita jadi homogen.
+
+## Entropy and Information Gain
+
+Cara pemilihan variabel yang dijadikan sebagai inner nodes adalah menggunakan acuan entropy dan information gain. 
+
+1. Entropy: mengukur seberapa homogen data kita (range 0<x<1)
+2. Information Gain: entropy total - entropy tiap variabel.
+
+```{r fig.height=10}
+library(partykit)
+species <- ctree(Species ~ ., iris)
+plot(species)
+```
+
+
+
+```{r}
+plot(species, type="simple")
+```
+
+PLot diatas mudah diinterpretasikan:
+1. Rulesnya adalah, jika saya memiliki data baru dengan ukuran panjang kelopak (petal) <= 1.9 maka model saya prediksi sebagai setosa.
+2. error adalah tingkat kesalahan model memprediksi terhadap data train.
+
+```{r}
+predict(species, newdata = data.frame(Petal.Length = 1, Sepal.Length = 5, Sepal.Width = 3, Petal.Width = 2.2))
+```
+
+
+```{r}
+diabetes <- read.csv("data_input/diabetes.csv")
+head(diabetes)
+```
+
+```{r}
+set.seed(100)
+in_diabetes_train <- sample(nrow(diabetes), nrow(diabetes)*0.9)
+diab_train <- diabetes[in_diabetes_train, ]
+diab_test <- diabetes[-in_diabetes_train, ]
+```
+
+
+```{r fig.height=8}
+diab_model_def <- ctree(diabetes ~., diab_train)
+plot(diab_model_def)
+plot(diab_model_def, type="simple")
+
+pred_diab_def_train <- predict(diab_model_def, newdata = diab_train)
+pred_diab_def_test <- predict(diab_model_def, newdata = diab_test)
+```
+
+```{r}
+library(caret)
+confusionMatrix(pred_diab_def_train, diab_train[,9])
+```
+
+```{r}
+confusionMatrix(pred_diab_def_test, diab_test[,9])
+```
+
+Diatas adalah perbandingan performa model terhadap data train dan data test. nilai akurasinya tidak jauh berbeda, artinya model cukup baik memprediksi unseen data (tidak overfit)
+
+## Pruning and Tree-size
+
+Setelah membagi data train dan data test, ketika kita menggunakan decision tree kita harus mengatur kapan pohon tersebut harus berhenti tumbuh. jika pohon itu tumbuh tanpa batas, pohon tersebut akan membelah semua titik dan menghasilkan model yang terlalu spesifik (overfitting: varians nya tinggi, bias nya kecil). Ketika kita memiliki model yang overfitting, maka model kita tidak bisa mempredik unseen data (hanya bisa mempredik data train). Agar tidak overfitting, dengan menetapkan jumlah level untuk memberikan batas kapan pohon yang terbentuk akan berhenti tumbuh. ada dua metode dalam mengatasi overfitting ini, yaitu:
+
+a. prepruning, membatasi pembentukan pohon dari awal.
+b. postpruning, yaitu menyederhanakan pohon dengan cara membuang beberapa cabang pohon setelah selesai dibuat.
+
+Parameter yang diatur:
+a. minsplit: banyak nya observasi di setiap nodes.
+b. minbucket: banyak nya observasi di setiap terminal.
+c. mincriterion: 1-mincriterion adalah alpha. Artinya semakin kecil nilai mincriterion, model yang terbentuk semakin kompleks (overfit), best practice nya adalah 0.95.
+
+```{r}
+diab_model <- ctree(diabetes ~ ., diab_train, control = ctree_control(mincriterion=0.005, minsplit=0, minbucket=0))
+plot(diab_model)
+```
+
+```{r}
+pred_diab_train <- predict(diab_model, diab_train)
+confusionMatrix(pred_diab_train, diab_train[,9])
+```
+
+```{r}
+pred_diab_tes <- predict(diab_model, diab_test)
+confusionMatrix(pred_diab_tes, diab_test[,9])
+```
+
+Model diatas memiliki akurasi 98% di datatrain, namun 70% didata test. artinya model ini overfitt.
+
+```{r fig.height=10}
+temp_model <- ctree(diabetes ~ ., diab_train, control = ctree_control(mincriterion=0.95, minsplit=0, minbucket=0))
+plot(temp_model, type = "simple")
+```
+
+prediksi model dengan tuning paramter mincriterion = 0.95, minsplit = 0 , minbucket = 0.
+
+```{r}
+pred_temp_train <- predict(temp_model, newdata = diab_train)
+pred_temp_test <- predict(temp_model, newdata = diab_test)
+```
+
+```{r}
+confusionMatrix(pred_temp_train, diab_train[,9])
+```
+
+```{r}
+confusionMatrix(pred_temp_test, diab_test[,9])
+```
+
+# K-fold CV
+
+# Random Forest
+
+```{r}
+fb <- read.csv("data_input/fitbit.csv", stringsAsFactors = F)
+fb[,c("user_name", "new_window", "classe")] <- lapply(fb[,c("user_name", "new_window", "classe")], as.factor)
+summary(fb$classe)
+```
+
+```{r}
+library(caret)
+set.seed(100)
+n0_var <- nearZeroVar(fb[,2:158])
+fb <- fb[,-n0_var]
+
+
+fb_intrain <- sample(nrow(fb), nrow(fb)*0.8)
+fb_train <- fb[fb_intrain, ]
+fb_test <- fb[-fb_intrain, ]
+```
+
+```{r}
+prop.table(table(fb_train$classe))
+```
+
+```{r}
+prop.table(table(fb_test$classe))
+```
+
+```{r}
+# set.seed(417)
+# ctrl <- trainControl(method="repeatedcv", number=5, repeats=3)
+# fb_forest <- train(classe ~ ., data=fb_train, method="rf", trControl = ctrl)
+```
+
+```{r}
+fb_forest <-readRDS("fb_forest.RDS")
+fb_forest
+```
+
+```{r}
+plot(fb_forest)
+```
+
+```{r}
+table(predict(fb_forest, fb_test[,-57]), fb_test[,57])
+```
+
+```{r}
+sum(predict(fb_forest, fb_test[,-57])==fb_test[,57])
+```
+
+```{r}
+nrow(fb_test)
+```
+
+```{r}
+plot(fb_forest$finalModel)
+legend("topright", colnames(fb_forest$finalModel$err.rate),col=1:6,cex=0.8,fill=1:6)
+```
+
+```{r}
+fb_forest$finalModel
+```
+
