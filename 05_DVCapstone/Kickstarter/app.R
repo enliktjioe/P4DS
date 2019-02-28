@@ -17,6 +17,9 @@ ui <- dashboardPage(skin = "green",
                     dashboardHeader(title = "Kickstarter Explorer"),
                     dashboardSidebar(
                       sidebarMenu(
+                        menuItem(text = "Brief Introduction",
+                                 tabName ="menu0",
+                                 icon = icon("kickstarter")),
                         menuItem(text = "Most Popular Category",
                                  tabName ="menu1",
                                  icon = icon("kickstarter")),
@@ -46,6 +49,11 @@ ui <- dashboardPage(skin = "green",
                     
                     dashboardBody(
                       tabItems(
+                        tabItem(tabName = "menu0",
+                                h4("Kickstarter is American company based in New York, that maintains a global crowdfunding platform focused on creativity and merchandising. Kickstarter has reportedly received more than $4 billion in pledges from 15.5 million backers to fund 257,000 creative projects, such as films, music, stage shows, comics, journalism, video games, technology and food-related projects."),
+                                h4("In this project I want to do exploratory data analysis for things like: popular projects, most-funded projects, successful and failed projects, etc"),
+                                h4("For learning purpose, I'm using Kickstarter dataset that available in Kaggle (kaggle.com/kemical/kickstarter-projects)")
+                        ),
                         tabItem(tabName = "menu1",
                                 selectInput(inputId = "input1",
                                             label = "Choose Category",
@@ -115,11 +123,10 @@ server <- function(input, output) {
       project.category$main_category <- factor(project.category$main_category, levels = project.category$main_category)
       
       plot1a <- ggplot(project.category, aes(x = main_category, y = count)) +
-        geom_bar(stat = "identity", aes(fill = main_category)) +
+        geom_bar(stat = "identity", aes(fill = main_category), show.legend = FALSE) +
         labs(title = "Total Projects by Main-Category", x = "Main-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
-              plot.title=element_text(hjust=0.5),
-              legend.position = "bottom") +
+              plot.title=element_text(hjust=0.5)) +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5) +
         scale_y_continuous(limits = c(0,70000))
     
@@ -135,11 +142,10 @@ server <- function(input, output) {
       project.subcategory$category <- factor(project.subcategory$category, levels = project.subcategory$category)
       
       plot1b <- ggplot(head(project.subcategory, input$categoryCount), aes(x = category, y = count)) +
-        geom_bar(stat = "identity", aes(fill = category)) +
+        geom_bar(stat = "identity", aes(fill = category), show.legend = FALSE) +
         labs(title = "Top 10 Projects by Sub-Category", x = "Sub-Category Name", y = "Total") +
         theme(axis.text.x = element_text(angle=90, hjust=1),
-              plot.title=element_text(hjust=0.5),
-              legend.position = "bottom") +
+              plot.title=element_text(hjust=0.5)) +
         geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5) +
         scale_y_continuous(limits = c(0,25000))
     
@@ -345,7 +351,6 @@ server <- function(input, output) {
       geom_text(aes(label=paste0(count)), vjust=-0.5) +
       theme(plot.title=element_text(hjust=0.5), axis.title=element_text(size=12, face="bold"),
             axis.text.x=element_text(size=12), legend.position="null")
-
 
   })
 

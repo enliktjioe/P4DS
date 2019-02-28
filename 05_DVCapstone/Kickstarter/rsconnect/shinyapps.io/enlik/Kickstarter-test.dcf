@@ -5,8 +5,8 @@ account: enlik
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 700594
-bundleId: 1865626
+bundleId: 1911735
 url: https://enlik.shinyapps.io/Kickstarter-test/
-when: 1549699901.75028
+when: 1551588045.1569
 asMultiple: FALSE
 asStatic: FALSE

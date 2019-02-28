@@ -1,8 +1,10 @@
 ---
-title: "DV Capstone - Kickstarter.com Data Analysis"
+title: "DV Capstone - Kickstarter Explorer"
 author: "Enlik Tjioe"
 date: "7 February 2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +22,7 @@ options(scipen = 9999)
 ```
 
 # Introduction
-**Kickstarter** is American company based in New York, that maintains a global crowdfunding platform focused on creativity and merchandising. The company's stated mission is to "help bring creative projects to life".[4] Kickstarter has reportedly received more than $4 billion in pledges from 15.5 million backers to fund 257,000 creative projects, such as films, music, stage shows, comics, journalism, video games, technology and food-related projects. (https://en.wikipedia.org/wiki/Kickstarter)
+**Kickstarter** is American company based in New York, that maintains a global crowdfunding platform focused on creativity and merchandising. The company's stated mission is to "help bring creative projects to life". Kickstarter has reportedly received more than $4 billion in pledges from 15.5 million backers to fund 257,000 creative projects, such as films, music, stage shows, comics, journalism, video games, technology and food-related projects. (https://en.wikipedia.org/wiki/Kickstarter)
 
 **Some things I want to analyze:**
 
