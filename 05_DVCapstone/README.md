@@ -11,10 +11,14 @@ Project "Kickstarter Explorer" is one of my data visualization projects during m
 - What types of projects were successful and unsuccessful?
 - How many Successful and Failed Projects per Year?
 
-# Shiny Apps Live App
-(https://enlik.shinyapps.io/Kickstarter-test/)
-
 # Project Directory
 `dv_capstone.Rmd` = R Markdown file for documentation purpose of this project
-`dv_capstone.html` = Output file from Rmd
+
 `Kickstarter/app.R` = source code for this project, written in R language with Shiny package for web application development
+
+
+# Shiny Apps Live App
+https://enlik.shinyapps.io/Kickstarter-test/
+
+# RPubs Paper
+http://rpubs.com/enlik/kickstarter
