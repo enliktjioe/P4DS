@@ -1,21 +1,112 @@
 ---
-title: "LBB Classification in Machine Learning 2"
+title: "LBB Classification 2 in Machine Learning"
 author: "Enlik"
 date: "28 February 2019"
 output: html_document
 ---
 
 # Introduction
-Use any of the 3 classification algorithms you’ve learned to predict the risk status of a bank loan. The variable *default* in the dataset indicates whether the applicant did default on the loan issued by the bank. Start by reading the loan.csv dataset in, a dataset that is originally from Professor Dr. Hans Hofmann:
+In this *Learn by Building* project, I'll using **Random Forest** classification algorithm to predict the risk status of a bank loan. Using `loan.csv` dataset (source from Professor Dr. Hans Hofmann).
 
-DEFAULT = FAILURE
-Artinya gagal bayar loan
+The variable *default* in the dataset indicates whether the applicant did default on the loan issued by the bank.
+
+# Library
+*caret* package will be used for some machine learning and random forest function
+```{r}
+library(caret)
+```
+
+Read data and check the structure
 ```{r}
 loans <- read.csv("data_input/loan.csv")
 str(loans)
 ```
 
+Setup 80% dataset for train and 20% dataset for test 
 ```{r}
+set.seed(700)
 
+loans.intrain <- sample(nrow(loans), nrow(loans)*0.8)
+loans.train <- loans[loans.intrain, ]
+loans.test <- loans[-loans.intrain, ]
 ```
+
+Check the proportion for every *default* value in both the train and test datasets
+```{r}
+prop.table(table(loans.train$default))
+```
+
+```{r}
+prop.table(table(loans.test$default))
+```
+
+Creating Random Forest model using a 5-fold Cross Validation, with 3 repeats.
+
+(This chunk is set with parameter `eval = F` to reduce time processing, so we can skip this chunk and using the prepared model that we'll create in the next step)
+```{r, eval = F}
+set.seed(100)
+ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 3) #Question cara nentuin number dan repeats?
+loans_forest <- train(default ~ ., data = loans.train, method = "rf", trControl = ctrl)
+```
+
+I'm save *loans_forest* model into `loans_forest.RDS` file for pre-built model.
+```{r}
+saveRDS(loans_forest, file = "loans_forest.RDS")
+```
+
+Read `loans_forest.RDS`, which is the same model with `loans_forest` that I created before
+```{r}
+loans_forest <- readRDS("loans_forest.RDS")
+loans_forest
+```
+From the above summary, I learn some different values of `**mtry**`. This means the number of variables available for splitting at each tree node.
+
+It also state Accuracy was used to select the optimal model, and the final value used for the model was `mtry = 18`.
+
+
+Use confusionMatrix to check Accuracy of `loans_forest` model, it has same value with Random Forest model with `mtry = 18`.
+```{r}
+confusionMatrix(loans_forest)
+```
+
+
+Visualization pf the selection process and make sure that `mtry = 18` was the highest cross-validation accuracy.
+```{r}
+plot(loans_forest)
+```
+
+Check how many times does our `loans_forest` prediction model correct with *test* set. 
+```{r}
+table(predict(loans_forest, loans.test[,-17]), loans.test[,17])
+```
+
+There are 48 mis-classification out of 200 predictions.
+(200 - 152 = 48)
+```{r}
+sum(predict(loans_forest, loans.test[,-17]) == loans.test[,17])
+```
+
+```{r}
+nrow(loans.test)
+```
+It has about 74% accuracy and need more improvement.
+
+Get a list of the most important variables used in our random forest. The top 3 is: age, months_loan_duration, and checking_balance unknown.
+```{r}
+varImp(loans_forest)
+predict(loans_forest, loans.test, type = "prob")
+```
+
+
+
+# Final Model
+```{r}
+plot(loans_forest$finalModel)
+legend("center", colnames(loans_forest$finalModel$err.rate), col = 1:3, cex = 0.8, fill = 1:3)
+```
+
+```{r}
+loans_forest$finalModel
+```
+
 

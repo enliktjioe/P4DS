@@ -1024,7 +1024,7 @@ plot(fb_forest)
 
 Let's see how many times does our `fb_forest` prediction agree with the test set's label:
 ```{r}
-table(predict(fb_forest, fb_test[,-57]), fb_test[,57])
+table(predict(fb_forest, fb_test[,-57]), fb_test[,57]) #QUESTION: Kenapa column 57 ??
 ```
 Only 1 mis-classification out of 3925 predictions. 
 
@@ -1048,7 +1048,7 @@ Most of the above tips are helpful in helping you diagnose and "learn" from the 
 
 To emphasize on the model diagnostics point above, let's plot our random forest. Observe from the plot above that the random forest has managed to classify all observations into class 1 (`classe=1`) relatively early on in the process, while the forest has ~30-40 trees; However, it seems to take much longer to correctly classify observations from class 4. In your own experiment, it is often helpful to use visualizations like these to "diagnose" your model and boost performance. A visualization such as the following may even hint at the necessity for a random forest to go beyond 500 trees, or if the complexity of data warrant such a case.
 ```{r}
-plot(fb_forest$finalModel)
+plot(fb_forest$finalModel)fb_fore
 legend("topright", colnames(fb_forest$finalModel$err.rate),col=1:6,cex=0.8,fill=1:6)
 ```
 
