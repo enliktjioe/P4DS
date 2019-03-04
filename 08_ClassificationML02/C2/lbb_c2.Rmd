@@ -20,6 +20,8 @@ Read data and check the structure
 ```{r}
 loans <- read.csv("data_input/loan.csv")
 str(loans)
+
+summary(loans)
 ```
 
 Setup 80% dataset for train and 20% dataset for test 
@@ -46,12 +48,12 @@ Creating Random Forest model using a 5-fold Cross Validation, with 3 repeats.
 ```{r, eval = F}
 set.seed(100)
 ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 3) #Question cara nentuin number dan repeats?
-loans_forest <- train(default ~ ., data = loans.train, method = "rf", trControl = ctrl)
+loans_forest <- train(default ~ ., data = loans.train, method = "rf", trControl = ctrl, ntree = 100)
 ```
 
 I'm save *loans_forest* model into `loans_forest.RDS` file for pre-built model.
 ```{r}
-saveRDS(loans_forest, file = "loans_forest.RDS")
+# saveRDS(loans_forest, file = "loans_forest.RDS")
 ```
 
 Read `loans_forest.RDS`, which is the same model with `loans_forest` that I created before
