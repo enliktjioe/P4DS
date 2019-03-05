@@ -1,0 +1,42 @@
+# Unsupervised Learning
+## Algoritma Academy Fugen Night
+
+## Day 1
+1. apa itu unsupervised learning ?
+- salah satu teknik machine learning yang belajar tanpa kelas target
+- Unsupervised biasa digunakan untuk mereduksi dimensi serta melakukan clustering
+
+2.1 dimensionality reduction (menerapkan PCA)
+- membuat dimensi (variabel) baru yang tujuannya merangkum variabel2 sebelumnya
+- mereduksi dimensi sebanyak mungkin tapi mempertahankan variansi data sebanyak mungkin
+- cara PCA bekerja adalah dengan mencari yang namanya eigen vector dan eigen value
+- nilai eigen vector dan eigen value didapat dari matrix covariance variabel2 yang ada
+
+2.2 fungsi fungsi yang digunakan dalam PCA
+- scale()
+fungsi    : untuk melakukan scaling terhadap variabel
+parameter :
+            - data
+            - scale = T
+            - center = T
+
+- prcomp()
+fungsi    : untuk membuat PCA 
+parameter :
+            - data
+            - scale = T
+            - center = T
+apabila data sudah dilakukan scaling dengan fungsi scale maka parameter scale dan center pada fungsi prcomp tidak perlu.
+
+scale = T , center = T 
+    (x - mean(data))/sd(data)
+
+
+- biplot ()
+fungsi :
+        - biplot merupakan plot untuk memvisualisasikan variabel2             awal berdasarkan PC yang ada
+        - informasi yang bisa didapat dari biplot adalah:
+          3.1 seberapa pengaruh variabel2 terhadap PC
+          3.2 seberapa berhubungan variabel2 yang ada
+          3.3 bisa mendeteksi outlier yang ada (dilihat dari
+              jaraknya terhadap pusat data)
