@@ -433,18 +433,21 @@ One last experiment: run `plot(ppt_prcomp)` in your notebook to get a variance p
 Q1:  
 The projection of our data on the first two principal components (PC1 and PC2, conventionally) is called a:  
 [__your answer here__]
+`biplot`
 
 Q2:  
 The code [__your answer here__] tells us how much variation each of the principal components have captured in decreasing order
+`summary(objec_prcomp)`
 
 Q3: The correlation between each of the principal components should [approximate one / approximate zero / approximate the correlation between the original variables]?
+`approximate zero`
 
 If you've successfully answered the above questions, you're on good track! Now let's take what we've just learned and look at another example.
 
 Exercise: PCA on Crime dataset
 The following dataset is built-in, and you can access it by calling `USArrests`. Take a quick look at the dataset, which comprise of arrests per 100,000 residents related to one of three crimes in each of the 50 US States in 1973:
 ```{r}
-data("USArrests")
+data("USArrests") #Data Bawaan dari R
 source("biplot.R")
 head(USArrests)
 ```
@@ -455,15 +458,29 @@ head(USArrests)
 
 In the second line I use `source("biplot.R")` to read in a function that renders the biplot for you. You can use `fancy_biplot(x)` the same way you would use `biplot(x)`: it accepts a pca object `x` and render a biplot. Now it's your turn: create the PCA object, and use `fancy_biplot()` to render a biplot. 
 
-1. Do you see a cluster of states where Arizona, Colorado, Illinois, and Texas are concentrated at. What other state is in that cluster?  
+```{r, fig.width=8, fig.height=8}
+USA_prcomp <- prcomp(USArrests, scale. = T, center = T)
+fancy_biplot(USA_prcomp)
+```
+
+
+1. Do you see a cluster of states where Arizona, Colorado, Illinois, and Texas are concentrated at. What other state is in that cluster? 
+New York
 
 2. From the biplot, can you tell which of the four states have a higher proportion of murder / assault / rape? Which of the 4 states have the lowest arrest in all of these three crimes?
 Pick from: "Ohio", "Louisiana", "North Dakota" and "Colorado"
 
-Highest proportion of murder:  
-Highest proportion of assault:  
-Highest proportion of rape:  
-Lowest proportion of crime:
+Highest proportion of murder: Louisiana
+Highest proportion of assault: Lousiana
+Highest proportion of rape:  Colorado
+Lowest proportion of crime: North Dakota (paling jauh dari arah kriminal)
+
+```{r}
+# str(USA_prcomp)
+# str(USArrests)
+
+USArrests[c("Ohio", "Louisiana", "North Dakota", "Colorado"),]
+```
 
 You should rely on the biplot (reminder: `fancy_biplot()`) to answer the questions. Do not take a peek at the original data.
 
@@ -499,7 +516,7 @@ When using `select`, valid values include:
 `select=c("new york", "chicago")`: label observations with the name `new york` and `chicago`  
 `select="contrib 10`: label 10 elements that have the highest contribution on the 2 dimensions of our plot
 
-```{r}
+```{r, fig.width=8, fig.height=8}
 plot.PCA(loan_pca, cex=0.6, choix = c("ind"), select="contrib 5", habillage=7)
 plot.PCA(loan_pca, cex=0.6, choix = c("var"))
 ```
@@ -621,7 +638,7 @@ con_manual15 <- prcomp.recon(face_pca_m, pcs=1:15)
 par(mfrow=c(2,2), mar=c(0.5,0.5,1.5,0.5))
 showMatrix(faceData, title = 'Original Image')
 showMatrix(con_manual3, title = 'Reconstructed: 3 dimensions')
-showMatrix(con_manual10, title = 'Reconstructed: 7 dimensions')
+showMatrix(con_manual10, title = 'Reconstructed: 10 dimensions')
 showMatrix(con_manual15, title = 'Reconstructed: 15 dimensions')
 ```
 
