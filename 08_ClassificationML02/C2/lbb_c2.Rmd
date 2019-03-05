@@ -11,9 +11,13 @@ In this *Learn by Building* project, I'll using **Random Forest** classification
 The variable *default* in the dataset indicates whether the applicant did default on the loan issued by the bank.
 
 # Library
-*caret* package will be used for some machine learning and random forest function
+*caret* package will be used for some machine learning and random forest algorithm
+*e1071* package will be used for naive bayes algorithm in R
+*partykit* package will be used for decision tree model
 ```{r}
 library(caret)
+library(e1071)
+library(partykit)
 ```
 
 Read data and check the structure
@@ -24,7 +28,7 @@ str(loans)
 summary(loans)
 ```
 
-Setup 80% dataset for train and 20% dataset for test 
+# Setup Train Set and Test Set for our model
 ```{r}
 set.seed(700)
 
@@ -42,13 +46,14 @@ prop.table(table(loans.train$default))
 prop.table(table(loans.test$default))
 ```
 
+## 1.Random Forest Model
 Creating Random Forest model using a 5-fold Cross Validation, with 3 repeats.
 
 (This chunk is set with parameter `eval = F` to reduce time processing, so we can skip this chunk and using the prepared model that we'll create in the next step)
 ```{r, eval = F}
 set.seed(100)
 ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 3) #Question cara nentuin number dan repeats?
-loans_forest <- train(default ~ ., data = loans.train, method = "rf", trControl = ctrl, ntree = 100)
+loans_forest <- train(default ~ ., data = loans.train, method = "rf", trControl = ctrl)
 ```
 
 I'm save *loans_forest* model into `loans_forest.RDS` file for pre-built model.
@@ -91,12 +96,16 @@ sum(predict(loans_forest, loans.test[,-17]) == loans.test[,17])
 ```{r}
 nrow(loans.test)
 ```
-It has about 74% accuracy and need more improvement.
+
+```{r}
+152/200 * 100
+```
+It has about 76% accuracy
 
 Get a list of the most important variables used in our random forest. The top 3 is: age, months_loan_duration, and checking_balance unknown.
 ```{r}
 varImp(loans_forest)
-predict(loans_forest, loans.test, type = "prob")
+predict(loans_forest, head(loans.test), type = "prob")
 ```
 
 
@@ -106,9 +115,62 @@ predict(loans_forest, loans.test, type = "prob")
 plot(loans_forest$finalModel)
 legend("center", colnames(loans_forest$finalModel$err.rate), col = 1:3, cex = 0.8, fill = 1:3)
 ```
+From the above plot, we can assume that our *loans_forest* final model had higher *error rate* for consumer do default (Yes) compare to consumer didn't do default(No). OOB or *Out Of the Bags* means the dataset that we didn't use for this model.
 
 ```{r}
 loans_forest$finalModel
 ```
 
+## 2. Naive Bayes Model
+`train_labels` using label from column 17 `default`, which factor of `yes` or `no`
+```{r}
+train_labels <- loans[loans.intrain, 17]
+test_labels <- loans[-loans.intrain, 17]
+loans_naive <- naiveBayes(loans.train, train_labels, laplace = 1)
+loans_prediction <- predict(loans_naive, loans.test)
+```
 
+Creating *confusion matrix* to estimate accuracy on unseen data
+```{r}
+table(prediction = loans_prediction, actual = test_labels)
+```
+
+```{r}
+sum(loans_prediction == test_labels) / length(test_labels) * 100
+```
+From *Naive Bayes* model, we got very big accuracy *99.5%*. It is around 25% bigger than our Random Forest model with around *74%* accuracy
+
+
+## 3.Decision Tree Model
+We will creating decision tree using `ctree()` function from `partykit` package
+```{r}
+loans_dt <- ctree(default ~ ., loans.train)
+plot(loans_dt)
+```
+
+Plot with type simple for our model
+```{r}
+plot(loans_dt, type = "simple")
+```
+
+Print our decision tree model
+```{r}
+loans_dt
+```
+
+Predict for both train and test set of our Decision Tree Model
+```{r}
+predict_loans_dt_train <- predict(loans_dt, loans.train)
+predict_loans_dt_test <- predict(loans_dt, loans.test)
+```
+
+Create confusion matrix for both train and test set
+```{r}
+confusionMatrix(predict_loans_dt_train, loans.train[,17])
+```
+
+
+```{r}
+confusionMatrix(predict_loans_dt_test, loans.test[,17])
+```
+From confusion matrix analysis above, we can check that accuracy from train and test set is similar which means this *decision tree* model can predict unseen data (not overfitting)
