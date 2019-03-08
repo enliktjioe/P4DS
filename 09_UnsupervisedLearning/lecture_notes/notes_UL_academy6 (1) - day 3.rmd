@@ -1,0 +1,185 @@
+# Unsupervised Learning
+## Algoritma Academy Fugen Night
+
+## Day 1
+1. apa itu unsupervised learning ?
+- salah satu teknik machine learning yang belajar tanpa kelas target
+- Unsupervised biasa digunakan untuk mereduksi dimensi serta melakukan clustering
+
+2.1 dimensionality reduction (menerapkan PCA)
+- membuat dimensi (variabel) baru yang tujuannya merangkum variabel2 sebelumnya
+- mereduksi dimensi sebanyak mungkin tapi mempertahankan variansi data sebanyak mungkin
+- cara PCA bekerja adalah dengan mencari yang namanya eigen vector dan eigen value
+- nilai eigen vector dan eigen value didapat dari matrix covariance variabel2 yang ada
+
+2.2 fungsi fungsi yang digunakan dalam PCA
+- scale()
+```{r}
+scale_mtcars <- scale(mtcars, center = T, scale = T)
+head(scale_mtcars)
+
+
+
+
+```
+
+
+
+fungsi    : untuk melakukan scaling terhadap variabel
+parameter :
+            - data
+            - scale = T
+            - center = T
+
+- prcomp()
+```{r}
+prcomp_mtcars <- prcomp(mtcars, scale. = T, center = T)
+```
+
+fungsi    : untuk membuat PCA 
+parameter :
+            - data
+            - scale = T
+            - center = T
+apabila data sudah dilakukan scaling dengan fungsi scale maka parameter scale dan center pada fungsi prcomp tidak perlu.
+
+scale = T , center = T 
+    (x - mean(data))/sd(data)
+
+
+- biplot ()
+```{r fig.width=8, fig.height=8}
+biplot(prcomp_mtcars)
+```
+
+
+fungsi :
+        - biplot merupakan plot untuk memvisualisasikan variabel2 awal berdasarkan PC yang ada
+        - informasi yang bisa didapat dari biplot adalah:
+          3.1 seberapa pengaruh variabel2 terhadap PC
+          3.2 seberapa berhubungan variabel2 yang ada
+          3.3 bisa mendeteksi outlier yang ada (dilihat dari
+              jaraknya terhadap pusat data)
+              
+- summary()
+eigen value = var pc
+```{r}
+summary(prcomp_mtcars)
+
+#var = sd^2
+
+prcomp_mtcars$sdev^2/ncol(mtcars)
+
+cor(prcomp_mtcars$x)
+
+#semakin besar nilai eigen value maka nilai variansi dari PC semakin besar
+```
+
+rm
+model saya tidak bisa diinterpretasikan
+harga rumah = B0 + 1.9 X luas tanah + 0.23 X banyaknya kamar.....
+
+
+PCA + rm
+harga rumah = B0 + 2.1 X Pc1 + 3.2 X PC2
+
+
+day 2
+
+factomineR
+
+PCA()
+parameter:
+- x           data yang akan digunakan 
+- quali.sup   untuk memberi tau var yang factor
+- graph T/F   untuk mengeluarkan plot atau tidak
+- ncp         banyaknya dimensi yang akan di gunakan pada final model
+
+plot.PCA()
+- x           objek dari PCA()
+- choix       ind untuk memvisualisasikan data
+              var untuk memvisualisasikan variabel
+- habillage   untuk memberi warna berdasarkan variabel yang bertipe factor
+- select      contrib x, ingin melihat sebanyak x data yang paling berpengaruh
+
+
+dimdesc()
+untuk melihat deskripsi data dimensi yang ada
+
+
+salah satu karakter dari PCA adalah:
+1. antar PC tidak memiliki `cor()`
+2. ketika kita sudah membuat objek PCA kita bisa mengembalikannya ke bentuk semula sebanyak dimensi yang kita pilih `reconst()`
+
+
+pertanyaan:
+1. bagaimana caranya mengambil lebih dari 3 dimensi di dimdesc
+```{r}
+data(mtcars)
+library(FactoMineR)
+mtcars <- scale(mtcars)
+mtcars_pca <- PCA(mtcars, ncp = 10)
+mtcars_dimdes <- dimdesc(mtcars_pca, axes = 1:10, proba = 0.95)
+```
+
+
+2. bagaimana cara mengganti dimensi dalam plot.PCA()
+```{r}
+plot.PCA(mtcars_pca,choix = c("ind"), c(2,3))
+
+```
+
+
+
+
+
+Day 3
+
+k-means
+salah satu metode clustering yang cara menentukan centroid nya secara acak diawal, kemudian mengupdate centroid nya dengan nilai mean
+
+fungsi untuk membuat k-means di r `kmeans()` parameternya:
+1. x        data
+2. k        jumlah k
+3. max.iter menentukan jumlah iterasi maksimum
+
+beberapa nilai yang dihasilkan oleh kmeans adalah
+```{r, eval=F}
+# a_k adalah model kmeans
+
+a_k$cluster #cluster pada data
+a_k$centers #centroid
+a_k$iter #iterasi
+a_k$size #jumlah data pada masing masing cluster 
+
+# withinss harus kecil
+a_k$withinss # ss = sum of square dari data terhadap clusternya
+a_k$tot.withinss # jumlah dari withinss
+
+# between/totss harus besar
+a_k$betweenss # jarak antara centroid ke pusat global (mean global)
+a_k$totss # jarak data ke pusat global (mean global)
+```
+
+
+
+
+```{r}
+USA_k <- kmeans(scale(USArrests), 3, iter.max = 500) 
+USArrests$clust <- as.factor(USA_k$cluster)
+
+library(dplyr)
+
+
+USArrests %>% 
+  group_by(clust) %>% 
+  summarise(mean_rape = mean(Rape), 
+            mean_murder = mean(Murder),
+            mean_Assault = mean(Assault))
+
+USArrests[USArrests$clust==1,]
+```
+
+
+
+
