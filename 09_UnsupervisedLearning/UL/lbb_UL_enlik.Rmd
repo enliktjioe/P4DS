@@ -1,0 +1,124 @@
+---
+title: "LBB Unsupervised Learning"
+author: "Enlik"
+date: "8 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 123)
+```
+
+
+# Notes
+Dari Kmeans bisa dicari dari 3 nilainya untuk analisis:
+nilai k, nilai withinss, dan nilai tot.withinss
+
+# Metode
+k-means:
+- perbandingan nilai withinss
+- perbandingan between/total
+- perbandingan plot
+- size cluster juga boleh dibahas
+
+pca:
+- summary() objek PCA
+- biplot()
+
+PCA + k-means:
+1. dilakukan PCA dulu
+2. hasil PCA (object$x) dilakukan clustering menggunakan kmeans
+3. pembahasan selanjutnya sama seperti k-means
+
+# Tips
+PCA kan dulu, baru pakai Kmeans ke nilai PCA nya
+
+
+## Library
+`factoextra` package will be used for `fviz_cluster()` function to provide ggplot2-based elegant visualization of partitioning method such as `kmeans()`.
+```{r, message=FALSE}
+library(factoextra)
+```
+
+## Read Data
+We will used provided **wholesale.csv** dataset.
+We are removing *Channel* and *Region* column because these two columns don't have significant effect for our model.
+After that we're using `scale()` function to normalize our data before running our PCA or Kmeans model.
+
+It will contain 6 types of wholesale product for analysis:
+
+- `Fresh`
+- `Milk`
+- `Grocery`
+- `Frozen`
+- `Detergents_Paper`
+- `Delicassen`
+
+```{r}
+ws <- read.csv("data_input/wholesale.csv")
+ws <- ws[,-c(1,2)]
+ws <- scale(ws)
+```
+
+```{r}
+cov(ws)
+```
+
+## Using PCA model
+Using `prcomp()` function from R, we can do *Principal Component Analysis (PCA)* for dimensionality reduction of our model.
+We specify `center = T` to centralize our data around the mean.
+```{r}
+ws_prcomp <- prcomp(ws, center = T)
+plot(ws_prcomp)
+```
+Show variances value from our six products in dataset.
+
+
+Set smaller ws dataset by using first 100 rows value.
+```{r, fig.width=7, fig.height=5}
+ws_small <- ws[1:100, ]
+ws_prcomp_small <- prcomp(ws_small, scale=T)
+
+summary(ws_prcomp_small)
+biplot(ws_prcomp_small, cex = 0.75)
+```
+Plot above shows:
+
+- The first 100 product sales within our data is positioned in terms of PC1 and PC2 represented by text labels
+- The loading of each product on PC1 and PC2, represented by the red arrow
+- x-axis = *PC1*
+- y-axis = *PC2*
+- top-axis and right-axis as *loading value*
+
+
+## Use Kmeans on PCA object
+```{r}
+ws2 <- read.csv("data_input/wholesale.csv")
+
+ws2_prcomp <- prcomp(ws2[, -c(1,2)], scale. = T, center = T)
+summary(ws2_prcomp)
+```
+
+```{r}
+ws2_new <- as.data.frame(ws2_prcomp$x)[,1:2]
+model_ws2_prcomp <- kmeans(ws2_new, 3)
+ws2$clus <- as.factor(model_ws2_prcomp$cluster)
+head(ws2[,-c(1,2)])
+```
+
+## Using Kmeans from beginning
+Find optimum k from range *3 to 7* by comparing the value of between sum of square `between SS` divide by total sum of square `tot SS`. 
+We also print `withinss` value which means **a vector of within-cluster sum of squares**
+```{r}
+set.seed(100)
+for (i in 3:7) {
+  temp <- kmeans(ws, i)
+  cat("k = ", i, " give value \n withinss = ", temp$withinss, "\n betweenss/totss = ", round(temp$betweenss/temp$totss, 4)*100,"% \n\n")
+  print(fviz_cluster(temp, ws))
+}
+```
+
+
+
+
