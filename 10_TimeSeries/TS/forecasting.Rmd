@@ -126,6 +126,7 @@ The data inspects the amount of these emissions starting from the year 1970 unti
 ```{r}
 co2 <- read.csv("data_input/environment_1970f.csv")
 str(co2)
+dplyr::glimpse(co2)
 ```
 
 The 2nd to 7th variables indicate respectively:
@@ -152,6 +153,10 @@ The data is yearly observations between 1970 and 2012:
 ```{r}
 range(co2$year)
 ```
+
+//Notes:
+*Natural Period* yang umum contohnya harian, mingguan, bulanan, tahunan
+*Frekuensi* = dalam 1 Natural Period berapa nilainya, contoh: 1 tahun = 365 hari, 1 minggu = 7 hari
 
 Our variable of interest is the carbon dioxide emissions per capita, so we'll use that as the value for the `data` parameter. Our `start` and `end` are 1970 and 2012 respectively, and we make 1 observation per unit of time so we'll pass that into our `frequency` parameter:
 ```{r}
@@ -185,14 +190,41 @@ In other words, you can't decompose the above time series any further, for each 
 **Dive Deeper**: `presidents` is a built-in dataset recording the quarterly Approval Ratings of US Presidents. 
 
 1. What is the class of `presidents`? If it is not a time series object, convert it to a time series object. 
+```{r}
+data("presidents")
+# presidents
+class(presidents)
+```
+Time series presidents dengan frekuensi = 4.
+
 
 2. Plot the time series. 
+```{r}
+plot(presidents)
+```
 
 3. 2 hours and 8 minutes after John F.Kennedy's assassination, amid suspicions of a conspiracy against the government, Lyndon Johnson was sworn in as president. His presidential term is between the last quarter of 1963 (hint: `start=c(1963,4)`) to the last quarter of 1968. Create a time series plot for that time window using the appropriate `start` and `end` parameters  for the `window()` function. 
+```{r}
+plot(window(presidents, 
+              start=c(1963,4),
+              end = c(1968,4)))
+```
+Ini salah satu cara meng-analisa time-series lewat *otak-atik* range untuk melihat tren nya.
+
 
 4. Was Lydon Johnson a popular president during his presidential term?
+NOPE, kita bisa lihat grafiknya menurut
+
 
 5. As a bonus exercise, give the plot an appropriate main title and axis labels (x and y). 
+```{r}
+plotly::ggplotly(forecast::autoplot(presidents))
+```
+
+Data Year, sample per bulan, frequency daily
+```{r}
+365.25/12
+```
 
 Reference Answer:
 Lydon Johnson is arguably one of the least popular president in US history, with backlash stemming from "Frustration over Vietnam; too much federal spending and... taxation; no great public support for your Great Society programs; and ... public disenchantment with the civil rights programs". Famously, he "could scarcely travel anywhere without facing protests" as people protested and chanted "Hey, hey, LBJ, how many kids did you kill today?"[^6]
@@ -204,12 +236,22 @@ plot(window(presidents, start=c(1963,4), end=c(1968,4)))
 
 Let's take a look at the following data instead. The following is monthly data starting from January 1946 corresponding to the number of births (thousands) per month in New York City:
 ```{r}
+library(lubridate)
 births <- read.csv("data_input/nybirth.csv")
-str(births)
+births$date <- ymd(births$date)
+
+summary(births)
 ```
+
 
 **Dive Deeper**: 
 Referring to the code earlier, convert the above data frame to be a time series. Use the appropriate value for `frequency`, `start` and optionally, `end`. Plot the time series. 
+```{r}
+births <- ts(births$births,
+    start = c(1946,1),
+    frequency = 12)
+forecast::autoplot(births)
+```
 
 As you study your time series, you should notice that there are a considerable amount of "structural" pattern in your time series. We call these seasonal variation from year to year "seasonality": birth rate is lower near winter (Jan - Feb) and peaks in July (summer weather). 
 
@@ -259,16 +301,21 @@ Observe the plot of your time series again - an additive model seems a good fit 
 **Dive Deeper: Monthly Airline Passenger, 1949-1960** 
 1. Look at the following plot of an airline passenger time series. Recall that an additive model is appropriate if the seasonal and random variation is constant. Do you think this time series is better described using an additive or multiplicative model?
 
+*Additive*
+X = T * S * E 
+
+*Multiplicative*
+log(X) = log(T . S . E)
+
 ```{r}
 data("AirPassengers")
 plot(AirPassengers)
 ```
 
-2. Is it possible to transform the air passengers data such that it can be described using an additive model?
+2. Is it possible to transform the air passengers data such that it can be described using an *additive* model?
 ```{r}
 # your code below:
-
-
+plot(log(AirPassengers))
 ```
 
 **Tip (Extra Intuition):**
@@ -301,6 +348,8 @@ library(TTR)
 births_sma <- SMA(births_ts, n = frequency(births_ts))
 plot.ts(births_sma, col="dodgerblue4")
 ```
+
+// FINISH DAY 1
 
 So to solidify our understanding of the classical decomposition process, let's study the mathematical details behind `decompose()` by comparing our manual calculation to the one we obtain from `decompose`. 
 
