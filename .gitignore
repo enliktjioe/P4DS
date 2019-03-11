@@ -52,3 +52,9 @@ loans_forest.RDS
 09_UnsupervisedLearning/UL/unsupervised.pdf
 lbb_c2.html
 lbb_UL_enlik.html
+10_TimeSeries/TS/forecasting_cache
+10_TimeSeries/TS/forecasting_files
+10_TimeSeries/TS/assets
+10_TimeSeries/TS/data_input
+10_TimeSeries/TS/forecasting.html
+forecasting.pdf
