@@ -1,0 +1,52 @@
+---
+title: "UCI - Online Retail Dataset"
+author: "Enlik"
+date: "8 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 123)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+```
+
+```{r}
+retail <- read_excel("data_input/Online_Retail.xlsx")
+
+str(retail)
+```
+
+```{r}
+retail$InvoiceDate <- as.POSIXct(round(retail$InvoiceDate, "hours"))
+head(retail, 20)
+```
+
+```{r}
+range(retail$InvoiceDate)
+```
+
+Menghitung total invoice unik `InvoiceCount` per tanggal transaksi `InvoiceDate`
+```{r}
+invoice <- retail %>% 
+  filter(Quantity > 0) %>% 
+  group_by(InvoiceDate, InvoiceNo) %>% 
+  summarise(n()) %>% 
+  group_by(InvoiceDate) %>% 
+  summarise(InvoiceCount = n())
+invoice
+```
+
+```{r}
+library(lubridate)
+library(tidyr)
+
+
+range(invoice$InvoiceDate)
+```
+
+

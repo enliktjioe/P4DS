@@ -351,6 +351,17 @@ plot.ts(births_sma, col="dodgerblue4")
 
 // FINISH DAY 1
 
+```{r}
+plot(births_ts)
+head(births_dc$seasonal, 12)
+# plot(births_dc)
+```
+
+#NOTES
+- Februari adalah nilai seasonal terkecil
+- July adalah nilai seasonal terbesar
+
+
 So to solidify our understanding of the classical decomposition process, let's study the mathematical details behind `decompose()` by comparing our manual calculation to the one we obtain from `decompose`. 
 
 When we estimate the Trend component from a time series by using a moving average, recall that the specification is to have a symmetric window with equal weights. For a time series with 12 as the frequency value, the weight assigned to each observations within that considered window would be the same:
@@ -435,10 +446,13 @@ Plot the time series. Can you tell if an additive model is appropriate for this 
 
 Write your solution for (Q3) below:
 ```{r eval=F}
+plot(decompose(souvenir_ts, type = "multiplicative"))
 
+```
 
-
-
+*dengan additive*
+```{r}
+plot(decompose(log(souvenir_ts)))
 ```
 
 
@@ -575,7 +589,7 @@ The function I use here is `ets()`, which accepts an optional `model` specificat
 - First letter denotes the error type ("A", "M" or "Z")  
 - Second letter denotes the trend type ("N"", "A", "M" or "Z")  
 - Third letter denotes the seasonality ("N"", "A", "M" or "Z")  
-- Where N indicates "none", "A" indicates additive, "M" indicates multiplicative and "Z" for automatic selection  
+- Where N indicates "none", "A" indicates additive, "M" indicates multiplicative and "Z" for automatic selection
 
 Let's create an exponential smoothing that only consider the error ignoring any trend and seasonality in our time series:
 ```{r}
@@ -584,6 +598,10 @@ co2_ets <- ets(co2_ts, model="ANN", alpha=0.2)
 co2_ets$fitted
 co2_ets$residual
 ```
+`ANN` means ADDITIVE for Error ; NONE for Trend ; NONE for Seasonality
+`fitted` means hasil smoothing 
+`residual` 
+
 
 Observe that we can confirm the formula $F_{t+1}=F_t + \alpha E_t$:   
 ```{r}
@@ -601,10 +619,16 @@ lines(co2_ets$fitted, lty=2, col="dodgerblue4")
 
 It seems like our earlier suspicion was right - it didn't seem to adequately "capture" the trend in our data. 
 
+#Cheatsheet
+1. Error -> A (Additive) / M (Multiplicative) / Z (Automatic Model, yang terbaik)
+2. Trend -> A / Ad (Teredam) / Z
+3. Seasonality -> A (Additive) / M (Multiplicative) / Z
+
+
 **Discussion:**
 It looks like `model="ANN"` isn't the right model specification for our time series. There exist an additive trend component that wasn't considered. How would you change the following code?
 ```{r eval=F}
-co2_ets<- ets(____, model="_____", alpha=0.2)
+co2_ets<- ets(co2_ts, model="ZZZ", alpha=0.2)
 ```
 
 To see if your code works, plot the time series along with your forecasting line and compare to the original plot (the one that systematically under-predicts the value of CO2 in Indonesia). Is your model an improvement?
@@ -612,9 +636,14 @@ To see if your code works, plot the time series along with your forecasting line
 ```{r eval=F}
 ### plot your new exponential smoothing model below and compare to the plot we created above
 
+plot(co2_ts)
+lines(co2_ets$fitted, col = "tomato3")
 
 
 ```
+
+//FINISH DAY 2
+
 
 Reference answer: The forecast under-predicted most of the value because the trend component in our time series wasn't considered. Let's change the `model` specification by including an additive trend type:
 ```{r}
