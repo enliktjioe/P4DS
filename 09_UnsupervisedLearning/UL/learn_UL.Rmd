@@ -1,0 +1,27 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Notes
+Dari Kmeans bisa dicari dari 3 nilainya untuk analisis:
+nilai k, nilai withinss, dan nilai tot.withinss
+
+# Metode
+k-means:
+- perbandingan nilai withinss
+- perbandingan between/total
+- perbandingan plot
+- size cluster juga boleh dibahas
+
+pca:
+- summary() objek PCA
+- biplot()
+
+PCA + k-means:
+1. dilakukan PCA dulu
+2. hasil PCA (object$x) dilakukan clustering menggunakan kmeans
+3. pembahasan selanjutnya sama seperti k-means
+
+# Tips
+PCA kan dulu, baru pakai Kmeans ke nilai PCA nya

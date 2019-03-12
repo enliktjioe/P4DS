@@ -10,31 +10,6 @@ knitr::opts_chunk$set(echo = TRUE)
 options(scipen = 123)
 ```
 
-
-# Notes
-Dari Kmeans bisa dicari dari 3 nilainya untuk analisis:
-nilai k, nilai withinss, dan nilai tot.withinss
-
-# Metode
-k-means:
-- perbandingan nilai withinss
-- perbandingan between/total
-- perbandingan plot
-- size cluster juga boleh dibahas
-
-pca:
-- summary() objek PCA
-- biplot()
-
-PCA + k-means:
-1. dilakukan PCA dulu
-2. hasil PCA (object$x) dilakukan clustering menggunakan kmeans
-3. pembahasan selanjutnya sama seperti k-means
-
-# Tips
-PCA kan dulu, baru pakai Kmeans ke nilai PCA nya
-
-
 ## Library
 `factoextra` package will be used for `fviz_cluster()` function to provide ggplot2-based elegant visualization of partitioning method such as `kmeans()`.
 ```{r, message=FALSE}
@@ -93,6 +68,7 @@ Plot above shows:
 
 
 ## Use Kmeans on PCA object
+For this method, we'll do `prcomp()` first, and kmeans later
 ```{r}
 ws2 <- read.csv("data_input/wholesale.csv")
 
@@ -100,12 +76,15 @@ ws2_prcomp <- prcomp(ws2[, -c(1,2)], scale. = T, center = T)
 summary(ws2_prcomp)
 ```
 
+After we've got our PCA object, we set the type as data frame and implement `kmeans()` as a new model
 ```{r}
 ws2_new <- as.data.frame(ws2_prcomp$x)[,1:2]
 model_ws2_prcomp <- kmeans(ws2_new, 3)
 ws2$clus <- as.factor(model_ws2_prcomp$cluster)
-head(ws2[,-c(1,2)])
+tail(ws2[,-c(1,2)])
 ```
+From above dataset, we can find a new column named *clus* indicate about cluster type for every rows.
+
 
 ## Using Kmeans from beginning
 Find optimum k from range *3 to 7* by comparing the value of between sum of square `between SS` divide by total sum of square `tot SS`. 
@@ -119,6 +98,5 @@ for (i in 3:7) {
 }
 ```
 
-
-
+From output above, we can check added value between *k = 3* until *k = 7*. The *betweenss/totss* increment value getting lower when we were increasing k value. We can assume that incremented value of *10.28%* (58.88% - 48.6%) from k=4 to k=5 is the significant one, so we take *k = 5* as the k optimum value for this model.
 
