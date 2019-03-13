@@ -1,0 +1,75 @@
+---
+title: "Exercise"
+author: "Tiara Dwiputri"
+date: "3/11/2019"
+output: html_document
+---
+
+```{r}
+library(readxl)
+retail <- read_excel("data_input/Online_Retail.xlsx")
+head(retail)
+```
+
+```{r}
+retail$InvoiceDate <- as.POSIXct(round(retail$InvoiceDate, "hours"))
+head(retail)
+
+```
+
+The data ranged from December 2010 to December 2011.
+
+```{r}
+range(retail$InvoiceDate)
+```
+
+If the minus in the data means product replacement, then there are no real demand of this invoice record, how do you handle the data?
+
+```{r}
+summary(retail$Quantity)
+```
+
+Try to create a daily data with weekly natural period time series of invoice count!
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(lubridate)
+
+invoice <- retail %>% 
+  filter(Quantity > 0) %>% 
+  group_by(InvoiceDate, InvoiceNo) %>% 
+  summarise(Items = n()) %>%
+  summarise(InvoiceCount = n()) %>% 
+  mutate(Hour = hour(InvoiceDate),
+         Date = date(InvoiceDate)) %>% 
+  complete(Date, Hour, fill=list(InvoiceCount = 0)) %>% 
+  mutate(InvoiceDate = ymd_hms(paste0(Date, Hour,":00:00")),
+         Weekday = weekdays(InvoiceDate)) %>% 
+  filter(Hour != 6) %>%
+  glimpse()
+```
+
+```{r}
+table(invoice$Weekday)
+```
+
+```{r}
+unique(invoice$Hour)
+```
+
+```{r}
+summary(invoice)
+```
+```{r}
+library(forecast)
+invoice.ts <- ts(invoice$InvoiceCount, frequency = 13)
+autoplot(invoice.ts)
+```
+
+```{r}
+plot(decompose(invoice.ts))
+```
+```{r}
+plot(decompose(tail(invoice.ts, 13*7*4)))
+```
