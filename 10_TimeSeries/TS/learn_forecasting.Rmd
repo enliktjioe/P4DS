@@ -1,0 +1,67 @@
+---
+title: "Learn Forecasting"
+author: "Enlik"
+date: "13 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+rain <- scan("data_input/precip1.dat", skip=1)
+rain_ts <- ts(rain, start=c(1813))
+plot(rain_ts)
+```
+
+```{r}
+library(forecast)
+co2_ets <- ets(co2_ts, model = "ANN", alpha = 0.2)
+co2_ets$fitted
+```
+
+```{r}
+co2_ets$residuals
+```
+
+```{r}
+co2_ets$fitted[1] + 0.2 * co2_ets$residuals[1]
+```
+
+```{r}
+co2_ets$fitted[2] + 0.2 * co2_ets$residuals[2]
+```
+
+```{r}
+co2_ets$fitted[3] + 0.2 * co2_ets$residual[3]
+```
+
+```{r}
+co2_ets$fitted[2:4]
+```
+
+```{r}
+plot(co2_ts)
+lines(co2_ets$fitted, lty = 2, col = "dodgerblue4")
+```
+
+```{r}
+co2_ettrend <- ets(co2_ts, model="AAN", alpha=0.2)
+plot(co2_ts)
+lines(co2_ettrend$fitted, lty=2, col="dodgerblue4")
+```
+
+```{r}
+co2_hw <- HoltWinters(co2_ts, beta=F, gamma=F)
+co2_hw
+```
+
+```{r}
+plot(co2_hw, main="CO2 Emissions (ton) per capita, Indonesia")
+```
+
+```{r}
+rain_hw <- HoltWinters(rain_ts, beta=F, gamma=F)
+```
+

@@ -544,6 +544,8 @@ The following data `precip1.dat`[^9] contains a series of total annual rainfall 
 rain <- scan("data_input/precip1.dat", skip=1)
 rain_ts <- ts(rain, start=c(1813))
 plot(rain_ts)
+
+ets.rain <- ets()
 ```
 
 Observe that the mean hovers around 25 inches rather constantly throughout the 100 years and the random fluctuations also seem to be roughly constant in size, so it's probably appropriate to describe the data using an additive model. We've seen how a SMA would have worked on the above time series but here we'll see if a simple exponential smoothing algorithm is up to the task. 
@@ -931,6 +933,7 @@ The value of beta is 0.00 indicating that the estimate of the slope b of the tre
 ```{r}
 plot(souv_hw)
 ```
+
 
 In contrast, the value of gamma (0.96) is high, indicating that the estimate of the seasonal component at the current time point is just based upon very recent observations. 
 
