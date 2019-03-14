@@ -1,0 +1,285 @@
+---
+title: "How to Conquer ARIMA"
+output: html_notebook
+---
+
+# Introduction
+
+This notebook is created in a cookbok format for step by step introduction for understanding ARIMA.
+
+# Data Loading
+
+The cases we'll be taking as an example consist of:
+
+1. Nitrous oxide emission data from the material:
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+co2 <- read.csv("data_input/environment_1970f.csv")
+
+glimpse(co2)
+```
+
+The series we'll be using is the 5th column.
+
+2. Growth Rates of personal consumption
+
+```{r}
+library(fpp)
+autoplot(usconsumption, facets = T)
+```
+
+This data provided in `fpp` package, a time series package that includes a lot of time series example. Notice how in the help page of the data `?usconsumption` you will se that the data is a *growth rate* data. In a sense, the data itself is already a 1 differenced time series from personal consumption data.x
+
+In modelling exercise we'll only take 1 out of the 2 time series, the `consumption` series.
+
+# Case 1
+
+Building time series object using `ts()` and use `autoplot()` to create visualization.
+
+```{r}
+no.emission <- ts(co2$Nitrous.oxide.emissions..thousand.metric.tons.of.CO2.equivalent., frequency = 1, start=range(co2$year)[1])
+
+library(ggplot2)
+library(forecast)
+autoplot(no.emission) + theme_minimal()
+```
+
+## ARIMA
+
+1. Check if it is not stationary:
+
+```{r}
+library(tseries)
+adf.test(no.emission, alternative="s")
+```
+
+Failed to reject H0, means it is still considered not stationary. Use `diff()` to see if it will be stationary after differenced, if not, might need to use `log()` transformation
+
+```{r}
+adf.test(diff(no.emission), alternative="s")
+plot(diff(no.emission))
+```
+
+p-value is small, means the H0 is rejected. The time series is proven to be stationary by differencing.
+
+One last check using `acf()`:
+
+```{r}
+acf(diff(no.emission))
+```
+
+No gradually decreasing spikes across the lag. Means it is proven to be stationary in mean.
+
+3. Split train test dataset. I will split test data for last 5 years (2008 - 2012)
+
+```{r}
+train <- co2 %>% filter(year < 2008) %>% select(Nitrous.oxide.emissions..thousand.metric.tons.of.CO2.equivalent.) %>% ts(frequency = 1, start = 1970)
+test <- co2 %>% filter(year >= 2008) %>% select(Nitrous.oxide.emissions..thousand.metric.tons.of.CO2.equivalent.) %>% ts(frequency = 1, start = 2008)
+
+autoplot(train) + geom_line(data=test, col = "tomato3")
+```
+
+4. Apply `auto.arima()`
+
+```{r}
+auto <- auto.arima(train, seasonal = F)
+auto
+```
+
+The `d` make sense, since we know that it needs to be differenced once before coming into stationary states.
+
+5. Making sense of p and q
+
+To estimates the p and q manually, we can use `pacf()`:
+
+```{r}
+pacf(diff(train))
+```
+
+There are 2 lags going over the significant line, means either p or q would be at least 2.
+
+- Try p equals to or q equals to 2
+
+```{r}
+benchmark1 <- Arima(train, order = c(2,1,0), seasonal = F)
+benchmark1$aic
+```
+*AIC semakin kecil semakin bagus*
+
+
+```{r}
+benchmark2 <- Arima(train, order = c(0,1,2), seasonal = F)
+benchmark2$aic
+```
+*Ini lebih bagus*
+
+The q = 2 results in smaller AIC. Let's see the aic with our auto.arima model:
+
+```{r}
+auto$aic
+```
+
+Indeed, it has smaller AIC, means that using last 1 error moving average results in fewer information loss than using 2 last error. If using 2 order really is necessary, the residuals in the second lags should be high, let's clarify:
+
+```{r}
+acf(auto$residuals)
+```
+
+While it is showing a rather high spike in lag 2, it is said to be not significant enough, hence using order 1 is sufficient.
+
+6.  Calculating error on test set
+
+
+```{r}
+library(forecast)
+f<- forecast(auto, h=5)
+accuracy(f,test)
+```
+
+```{r}
+autoplot(f) + geom_line(data=test, col="tomato3", aes(x=x, y=y))
+```
+
+# Case 2
+
+Since the data already a ts object, we'll go ahead with the modelling steps.
+
+```{r message=FALSE, warning=FALSE}
+head(usconsumption[,1])
+tail(usconsumption[,1])
+```
+
+It might be better to model this using seasonal ARIMA, for now we'll use non-seasonal ARIMA for illustration.
+
+## Modelling
+
+1. Check if the time series stationary
+
+```{r}
+adf.test(usconsumption[,1], alternative = "s")
+```
+
+Already stationary in variance, let's check the acf plot:
+
+```{r}
+acf(usconsumption[,1])
+```
+
+The cut-off indicates that it is not stationary in trend.
+
+2. Split train test dataset. I will split test data for last 5 years (2005 - 2010)
+
+```{r}
+train <- window(usconsumption[,1], start = c(1970,1), end = c(2009,4))
+test <- window(usconsumption[,1], start = c(2010,1))
+
+autoplot(train) + geom_line(data=test, col = "tomato3")
+
+pacf(train)
+```
+
+3. Apply auto.arima on the time series
+
+```{r}
+auto <- auto.arima(train, seasonal = F)
+auto
+```
+
+Based on auto.arima, it is said that the best model is using MA(3).
+
+4. Making sense of p and q
+
+Let's try to use `pacf()` to determine the order manually:
+
+```{r}
+pacf(train)
+```
+
+The pacf indicates that up to 3 lags has high correlation with current value.
+
+- Try p equals to or q equals to 3
+
+```{r}
+benchmark1 <- Arima(train, order = c(3,0,0), seasonal = c(0,0,0))
+benchmark1$aic
+```
+
+```{r}
+benchmark2 <- Arima(train, order = c(0,0,3), seasonal = c(0,0,0))
+benchmark2$aic
+```
+
+```{r}
+auto$aic
+```
+
+The models shows that p = 3 results in lower AIC, but our auto.arima suggested that it should be ARIMA(1,0,1), it some cases because `auto.arima` actually using a stepwise and approximation method in order to save some computational resources 
+
+```{r}
+auto <- auto.arima(train, seasonal = F, approximation = F, stepwise = F)
+auto 
+```
+
+It arrives with the same order as ours, but in computational time it takes more time and might not be a good idea for a long time series.
+
+6. Calculate error on test set
+
+```{r}
+library(forecast)
+f<- forecast(auto, h=4)
+accuracy(f,test)
+f
+```
+
+```{r}
+autoplot(f) + geom_line(data=test, col="tomato3", aes(x=x, y=y))
+```
+
+## Modelling Seasonal ARIMA
+
+Same as treating seasonality in exponential smoothing, it is trying to do auto regression and moving average to its last season. It is denote as: ARIMA(p,d,q)(P,D,Q)f.
+
+```{r}
+auto.s <- auto.arima(train, approximation = F, stepwise = F)
+auto.s
+```
+
+Starting from ARIMA(3,0,0) we'll try to estimate the P and Q
+
+1. Estimate P,Q for seasonality
+
+To estimate P and Q use `pacf()` plot on the model residual
+
+```{r}
+pacf(auto$residuals)
+```
+
+See how the lag 2 (means lag 2 * 4 = 8, because the frequency is 4) is high. Means, the lag 2 can be recorded in seasonal ARIMA:
+
+- Try P = 2
+
+```{r}
+benchmark1 <- Arima(train, order = c(3,0,0), seasonal = c(2,0,0))
+benchmark1$aic
+```
+
+```{r}
+benchmark2 <- Arima(train, order = c(3,0,0), seasonal = c(0,0,2))
+benchmark2$aic
+```
+
+Close comparison with a bit lower on the first model, means the lag 2 shall be recorded in the AR for seasonality instead.
+
+2. Calculate error on test set
+
+```{r}
+f <- forecast(auto.s, h = 4)
+accuracy(f,test)
+```
+
+```{r}
+autoplot(f) + geom_line(data=test, col="tomato3", aes(x=x, y=y))
+```
+
+See how the MAPE decreases to 15% from 34%.
