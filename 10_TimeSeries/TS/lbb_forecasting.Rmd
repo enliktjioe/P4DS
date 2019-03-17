@@ -1,0 +1,55 @@
+---
+title: "LBB Forecasting"
+author: "Enlik"
+date: "17 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+Game of Thrones Wikipedia Views Data
+
+Read Data
+```{r}
+got <- read.csv("data_input/wiki_got_views.csv")
+str(got)
+```
+
+```{r}
+library(dplyr)
+got <- got %>% 
+  mutate(ds = as.Date(date), y = views) %>% 
+  select(ds, y)
+```
+
+```{r}
+library(prophet)
+got_model <- prophet(got)
+```
+
+```{r}
+got_fd <- make_future_dataframe(got_model, periods = 365)
+tail(got_fd)
+```
+
+```{r}
+got_fc <- predict(got_model, got_fd)
+str(got_fc)
+```
+
+```{r}
+actual_pred <- cbind(got, got_fc[1:nrow(got), c("yhat_lower", "yhat", "yhat_upper")])
+head(actual_pred)
+```
+
+```{r}
+plot(got_model, got_fc)
+```
+
+```{r}
+prophet_plot_components(got_model, got_fc)
+```
+
