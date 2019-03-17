@@ -238,19 +238,24 @@ Let's take a look at the following data instead. The following is monthly data s
 ```{r}
 library(lubridate)
 births <- read.csv("data_input/nybirth.csv")
-births$date <- ymd(births$date)
+# births$date <- ymd(births$date)
 
 summary(births)
+str(births)
+head(births, 12)
 ```
 
 
 **Dive Deeper**: 
 Referring to the code earlier, convert the above data frame to be a time series. Use the appropriate value for `frequency`, `start` and optionally, `end`. Plot the time series. 
 ```{r}
-births <- ts(births$births,
+births_ts <- ts(births$births,
     start = c(1946,1),
     frequency = 12)
-forecast::autoplot(births)
+forecast::autoplot(births_ts)
+
+str(decompose(births_ts))
+str(births_ts)
 ```
 
 As you study your time series, you should notice that there are a considerable amount of "structural" pattern in your time series. We call these seasonal variation from year to year "seasonality": birth rate is lower near winter (Jan - Feb) and peaks in July (summer weather). 
