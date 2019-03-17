@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+Question 1
+
+Which of the following statements regarding time series decomposition are true? 
+A.  An additive time series model can be decomposed so that the observed series is described as: $trend + $seasonal +  $random 
+B.  A multiplicative time series model can be decomposed so that the observed series is described as: $trend *  $seasonal * $random 
+C.  Taking the log of a time series is one way of transforming a multiplicative series into an additive model 
+
+Select all that apply
+A
+B
+C
+
+*ALL TRUE*
+
+
+Question 2
+
+Which of the following forecasting method incorporates seasonal smoothing into its model? 
+A.  Holt's Exponential Smoothing 
+B.  Simple Exponential Smoothing (SES) 
+C.  Simple Moving Averages 
+D.  Holt-Winters Exponential Smoothing 
+
+Choose one that best describes the answer
+A
+B
+C
+D
+
+*D*
+
+
+
+Question 3
+
+Supposed you want to transform a non-stationary time series into one that is stationary by stabilizing its variance, below are some of the methods that may be useful except: 
+A.  Performing an autocorrelation on the time series 
+B.  Differencing the time series 
+C.  Log-transformation on the time series 
+
+Choose one that best describes the answer
+A
+B 
+C
+
+*A*
