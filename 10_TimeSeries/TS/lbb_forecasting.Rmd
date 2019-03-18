@@ -16,6 +16,14 @@ options(scipen = 123)
 ## Pengenalan
 Dalam Analisis Time Series ini, saya mencoba melakukan forecasting terhadap perkiraan jumlah view halaman wikipedia Game of Throne dalam kurun waktu satu tahun ke depan.
 
+## Manfaat untuk Bisnis
+Analisis Time Series dapat digunakan untuk berbagai macam aplikasi bisnis untuk *forecasting* sebuah kuantitas di masa depan dan menjelaskan *historical pattern*-nya. Beberapa contoh *use-case* nya:
+
+* Menjelaskan *seasonal pattern* dalam penjualan suatu barang atau entitas tertentu
+* Memprediksi jumlah customer yang akan bergabung ataupun yang akan berhenti (*churning*)
+* Mengestimasi efek dari peluncuran sebuah produk baru terhadap jumlah penjualan unit
+* Mendeteksi kejadian yang tidak biasa dan memperkirakan besarnya efek yang ditimbulkan
+
 ## Membaca Data
 Data `wiki_got_views.csv` merupakan data jumlah view harian dari dari halaman wikipedia *Game of Thrones* dimulai dari tanggal *01 Juli 2015* hingga *16 Maret 2019*. Proses pengunduhan data dilakukan pada file `wiki_got.R`, dimana saya menggunakan library R *pageviews* dan fungsi `article_pageviews()` untuk mendapatkan semua data viewnya.
 ```{r}
@@ -52,7 +60,6 @@ str(got_pred)
 ```
 
 
-//TANYA
 ```{r}
 actual_pred <- cbind(got, got_pred[1:nrow(got), c("yhat_lower", "yhat", "yhat_upper")])
 head(actual_pred)
@@ -83,8 +90,150 @@ Awal bulan April hingga akhir bulan Agustus merupakan saat dimana jumlah view ce
 
 
 ## Kesimpulan
-Berdasarkan hasil analisa forecasting ini, saya bisa menyimpulkan adanya sebuah pola kenaikan dan penurunan jumlah view dari halaman Wikipedia Game of Thrones ini. Pola tersebut adalah:
+Berdasarkan hasil analisa forecasting dengan library `prophet` ini, saya bisa menyimpulkan adanya sebuah pola kenaikan dan penurunan jumlah view dari halaman Wikipedia Game of Thrones ini. Pola tersebut adalah:
 
 1. Sekitar beberapa hari sebelum penayangan perdana musim terbaru dari Game of Thrones, akan terjadi peningkatan jumlah view secara signifikan
 2. Hari Minggu dan Senin akan menjadi hari dengan trafik tertinggi setiap minggunya selama serial ini masih tayang.
 3. Q1 dan Q4 tiap tahunnya adalah saat terendah jumlah view
+
+
+
+## Forecasting with ARIMA
+Kali ini saya akan melakukan forecasting dengan ARIMA. ARIMA adalah singkatan dari Auto Regressive Integrated Moving Average dan mempunyai 3 parameter: *p, d, q*
+
+Penjelasan p, d, q:
+
+- p is the order (number of time lags) of the AR model
+- d is the degree of differencing (number of times the data have had past values subtracted)
+- q is the order of the moving-average model
+
+ARIMA merupakah model yang populer untuk forecasting dan mempunyai *flexible class* yang memanfaatkan informasi *historical* untuk membuat prediksi. Model ini menjadi dasar dari teknik forecasting yang selanjutnya dapat digunakan sebagai fondasi untuk model yang lebih kompleks.
+
+Dalam analisis ini, saya akan mengolah time series dari jumlah view halaman wikipedia Game of Thrones, melakukan *fitting* ARIMA model, dan membuat forecast sederhana.
+
+### Load R Packages 
+```{r, message=FALSE}
+library(ggplot2)
+library(forecast)
+library(tseries)
+library(plotly)
+
+str(got)
+```
+
+### Manipulasi Data
+Di sini saya membatasi cakupan hanya untuk data dari satu tahun terakhir yaitu dari 16 Maret 2018 hingga 16 Maret 2019 
+```{r}
+got2 <- got %>% 
+  mutate(Date = ds, views = y) %>% 
+  filter(Date >= "2018-03-16" & Date <= "2019-03-17") %>% 
+  select(Date, views)
+
+str(got2)
+```
+
+```{r, fig.width= 10, fig.height=10}
+ggplotly(ggplot(got2, aes(Date, views)) + geom_line() + ylab("Daily Views") + xlab("Date"))
+```
+
+Ada beberapa outlier dalam plot di atas yang dapat membuat model menjadi bias. R menyediakan sebuah metode untuk menghilangkan outlier dari time series yaitu `tsclean()` dari package `forecast`. Fungsi ini mengidentifikasi dan mengganti outlier dengan *series smoothing and decomposition*.
+
+```{r, message = FALSE}
+count_ts <- ts(got2[, c("views")])
+got2$clean_cnt <- tsclean(count_ts)
+
+ggplot() + 
+  geom_line(data = got2, aes(x = Date, y = clean_cnt)) + ylab("Cleaned Page Views") +
+  ylab("Daily Views") + xlab("Date")
+```
+
+Di sini saya mengambil weekly dan monthly moving average untuk proses smoothing sehingga data lebih stabil dan *predictable*
+```{r, fig.width=10, fig.height=10, message = FALSE, warning = FALSE}
+got2$cnt_ma <- ma(got2$clean_cnt, order = 7)
+got2$cnt_ma30 <- ma(got2$clean_cnt, order = 30)
+
+ggplot() +
+  geom_line(data = got2, aes(x = Date, y = clean_cnt, colour = "Normal Views")) +
+  geom_line(data = got2, aes(x = Date, y = cnt_ma, colour = "Moving Average (Weekly)")) +
+  geom_line(data = got2, aes(x = Date, y = cnt_ma30, colour = "Moving Average (Monthly)")) +
+  ylab("Daily Views") + xlab("Date")
+```
+
+Pada analisis ini, saya akan membuat model smoothing time series cukup dari weekly moving average (warna hijau)
+
+### Decompose Your Data
+Komponenn dari analisis time series adalah seasonality, trend, dan cycle.
+
+**Seasonal** berarti fluktuasi data yang berhubungan dengan siklus kalender. Sebagai contoh, orang-orang lebih suka membuka halaman wikipedia pada saat musim baru serial tv ini akan segera tayang, dan akan jauh lebih sedikit setelah penayangan berakhir.
+
+**Trend** berarti keseluruhan pattern dari time series. Contohnya, apakah jumlah view meningkat atau menurun dari waktu ke waktu?
+
+**Cycle** berarti pattern penurunan atau peningkatan yang tidak ada hubungannya dengan seasonal. Biasanya, trend dan cycle dikelompokkan bersama. Trend-cycle bisa diestimasi menggunakan *moving averages*
+
+Terakhir, bagian dari time series yang tidak dapat dikategorikan sebagai seasonal, cycle, atau trend akan dianggap sebagai **residual** atau **error**
+
+**Decomposition** merupakan proses meng-esktrak komponen-komponen tersebut.
+
+
+Langkah pertama, kita hitung *seasonal* menggunakan `stl()`. STL adalah fungsi untuk decomposing dan juga forecasting.
+```{r}
+count_ma <- ts(na.omit(got2$cnt_ma), frequency = 30)
+decomp <- stl(count_ma, s.window = "periodic")
+deseasonal_cnt <- seasadj(decomp)
+plot(decomp)
+```
+
+### Fitting an ARIMA model
+Fungsi `auto.arima()` melakukan otomatisasi terhadap nilai optimal *(p,d,q)*
+```{r}
+auto.arima(deseasonal_cnt, seasonal=FALSE)
+```
+
+
+### Evaluate and Iterate
+Setelah kita selesai fitting ARIMA model dan membuat forecast, apakah itu masuk akal? Dapatkan kita mempercayai model ini? Kita dapat memerika ACF dan PACF plot untuk model residual. Jika model urutan parameter dan struktur sudah benar, kita dapat berharap tidak ada autocorellations yang signifikan.
+```{r}
+fit<-auto.arima(deseasonal_cnt, seasonal=FALSE)
+tsdisplay(residuals(fit), lag.max=45, main='(3,1,4) Model Residuals')
+```
+
+```{r}
+fit2 = arima(deseasonal_cnt, order=c(1,1,7))
+
+fit2
+
+tsdisplay(residuals(fit2), lag.max=15, main='Seasonal Model Residuals')
+```
+
+```{r}
+fcast <- forecast(fit2, h=30)
+plot(fcast)
+```
+
+```{r}
+hold <- window(ts(deseasonal_cnt), start=100)
+
+fit_no_holdout = arima(ts(deseasonal_cnt[-c(700:725)]), order=c(1,1,7))
+
+fcast_no_holdout <- forecast(fit_no_holdout,h=25)
+plot(fcast_no_holdout, main=" ")
+lines(ts(deseasonal_cnt))
+```
+
+```{r}
+fit_w_seasonality = auto.arima(deseasonal_cnt, seasonal=TRUE)
+fit_w_seasonality
+```
+
+```{r}
+seas_fcast <- forecast(fit_w_seasonality, h=30)
+plot(seas_fcast)
+```
+
+
+## References
+[Prophet Library from Facebook](https://facebook.github.io/prophet/)
+
+[Game of Thrones Wikipedia](https://en.wikipedia.org/wiki/Game_of_Thrones)
+
+[Introduction to Forecasting with ARIMA in R](https://www.datascience.com/blog/introduction-to-forecasting-with-arima-in-r-learn-data-science-tutorials)

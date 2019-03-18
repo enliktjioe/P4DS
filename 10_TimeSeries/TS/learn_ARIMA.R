@@ -7,7 +7,6 @@ library("ggplot2") ; library("tseries") ; library(forecast)
 daily_data <- read.csv("Bike-Sharing-Dataset/day.csv", header = TRUE, stringsAsFactors = FALSE)
 str(daily_data)
 summary(daily_data)
-
 # Step 2: Examine Your Data
 daily_data$Date <- as.Date(daily_data$dteday)
 
