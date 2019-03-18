@@ -89,16 +89,7 @@ Hari Minggu dan Senin merupakan dua hari dengan tingkat kenaikan view yang tingg
 Awal bulan April hingga akhir bulan Agustus merupakan saat dimana jumlah view cenderung meningkat, karena merupakan waktu penayangan perdana serial tersebut setiap musimnya. 
 
 
-## Kesimpulan
-Berdasarkan hasil analisa forecasting dengan library `prophet` ini, saya bisa menyimpulkan adanya sebuah pola kenaikan dan penurunan jumlah view dari halaman Wikipedia Game of Thrones ini. Pola tersebut adalah:
-
-1. Sekitar beberapa hari sebelum penayangan perdana musim terbaru dari Game of Thrones, akan terjadi peningkatan jumlah view secara signifikan
-2. Hari Minggu dan Senin akan menjadi hari dengan trafik tertinggi setiap minggunya selama serial ini masih tayang.
-3. Q1 dan Q4 tiap tahunnya adalah saat terendah jumlah view
-
-
-
-## Forecasting with ARIMA
+## Forecasting dengan ARIMA
 Kali ini saya akan melakukan forecasting dengan ARIMA. ARIMA adalah singkatan dari Auto Regressive Integrated Moving Average dan mempunyai 3 parameter: *p, d, q*
 
 Penjelasan p, d, q:
@@ -111,7 +102,7 @@ ARIMA merupakah model yang populer untuk forecasting dan mempunyai *flexible cla
 
 Dalam analisis ini, saya akan mengolah time series dari jumlah view halaman wikipedia Game of Thrones, melakukan *fitting* ARIMA model, dan membuat forecast sederhana.
 
-### Load R Packages 
+### Library yang Dibutuhkan 
 ```{r, message=FALSE}
 library(ggplot2)
 library(forecast)
@@ -161,7 +152,7 @@ ggplot() +
 
 Pada analisis ini, saya akan membuat model smoothing time series cukup dari weekly moving average (warna hijau)
 
-### Decompose Your Data
+### Proses Decompose Data
 Komponenn dari analisis time series adalah seasonality, trend, dan cycle.
 
 **Seasonal** berarti fluktuasi data yang berhubungan dengan siklus kalender. Sebagai contoh, orang-orang lebih suka membuka halaman wikipedia pada saat musim baru serial tv ini akan segera tayang, dan akan jauh lebih sedikit setelah penayangan berakhir.
@@ -183,52 +174,40 @@ deseasonal_cnt <- seasadj(decomp)
 plot(decomp)
 ```
 
-### Fitting an ARIMA model
+### Fitting sebuah ARIMA model
 Fungsi `auto.arima()` melakukan otomatisasi terhadap nilai optimal *(p,d,q)*
 ```{r}
 auto.arima(deseasonal_cnt, seasonal=FALSE)
 ```
 
 
-### Evaluate and Iterate
-Setelah kita selesai fitting ARIMA model dan membuat forecast, apakah itu masuk akal? Dapatkan kita mempercayai model ini? Kita dapat memerika ACF dan PACF plot untuk model residual. Jika model urutan parameter dan struktur sudah benar, kita dapat berharap tidak ada autocorellations yang signifikan.
+### Evaluasi dan Iterasi
+Setelah kita selesai melakukan fitting pada ARIMA model dan membuat forecast, apakah itu masuk akal? Dapatkan kita mempercayai model ini? Kita dapat memerika ACF dan PACF plot untuk model residual. Jika model urutan parameter dan struktur sudah benar, kita dapat berharap tidak ada autocorellations yang signifikan.
+
+`tsdisplay()` digunakan untuk memplot model diagnostic.
 ```{r}
-fit<-auto.arima(deseasonal_cnt, seasonal=FALSE)
+fit <- auto.arima(deseasonal_cnt, seasonal=FALSE)
 tsdisplay(residuals(fit), lag.max=45, main='(3,1,4) Model Residuals')
 ```
 
+Berdasarkan ACF/PACF, ada lag di sekitar nilai 7 sehingga kita buat fitting model selanjutnya `fit2` 
 ```{r}
 fit2 = arima(deseasonal_cnt, order=c(1,1,7))
-
-fit2
-
 tsdisplay(residuals(fit2), lag.max=15, main='Seasonal Model Residuals')
 ```
 
+Forecasting menggunakan fitted model yang terbaru `fit2`
 ```{r}
 fcast <- forecast(fit2, h=30)
 plot(fcast)
 ```
 
-```{r}
-hold <- window(ts(deseasonal_cnt), start=100)
+## Kesimpulan
+Berdasarkan hasil analisa forecasting dengan library `prophet` dan juga ARIMA, saya bisa menyimpulkan adanya sebuah pola kenaikan dan penurunan jumlah view dari halaman Wikipedia Game of Thrones ini. Pola tersebut adalah:
 
-fit_no_holdout = arima(ts(deseasonal_cnt[-c(700:725)]), order=c(1,1,7))
-
-fcast_no_holdout <- forecast(fit_no_holdout,h=25)
-plot(fcast_no_holdout, main=" ")
-lines(ts(deseasonal_cnt))
-```
-
-```{r}
-fit_w_seasonality = auto.arima(deseasonal_cnt, seasonal=TRUE)
-fit_w_seasonality
-```
-
-```{r}
-seas_fcast <- forecast(fit_w_seasonality, h=30)
-plot(seas_fcast)
-```
+1. Sekitar beberapa hari sebelum penayangan perdana musim terbaru dari Game of Thrones, akan terjadi peningkatan jumlah view secara signifikan
+2. Hari Minggu dan Senin akan menjadi hari dengan trafik tertinggi setiap minggunya selama serial ini masih tayang.
+3. Q1 dan Q4 tiap tahunnya adalah saat terendah jumlah view
 
 
 ## References
