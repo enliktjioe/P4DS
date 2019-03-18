@@ -110,6 +110,8 @@ dat <- data.frame(expand.grid(c(0,1), c(0,1), c(1,2)), y)
 nneu <- neuralnet( y~Var1+Var2+Var3, dat, hidden=4, rep=5)
 # rep="best" to plot the repetition with the smallest error
 plot(nneu, rep="best")
+
+# length(nneu$net.result) # melihat nilai repetisi yang adalah 5
 ```
 
 By default, the `neuralnet()` function uses a backpropagation algorithm named `rprop+`. We are going to dive into the technical details of the backpropagation algorithm in later sections, but I want to take the opportunity to explain how this relates to "intelligence" as we understand it. A modern definition could be:  
@@ -190,8 +192,7 @@ length(nneu$net.result)
 Now apply the sum of squared error function we wrote above (we named it `sse`) on the list of predictions, which repetition of the neural network has the lowest training error? 
 ```{r}
 # Write the code to compute your SSE for each of the 5 repetitions
-
-
+unlist(lapply(nneu$net.result, sse))/2
 ```
 
 Your Answer:
