@@ -64,3 +64,12 @@ uci_online_retail.nb.html
 ARIMAhero.nb.html
 quiz_TS.nb.html
 lbb_forecasting.html
+10_TimeSeries/TS/Bike-Sharing-Dataset
+11_NeuralNetwork/NN/assets
+11_NeuralNetwork/NN/data_input
+11_NeuralNetwork/NN/neuralnetwork_cache
+11_NeuralNetwork/NN/neuralnetwork_files
+11_NeuralNetwork/NN/bank_marketing_nn.rds
+11_NeuralNetwork/NN/neuralnetwork.html
+11_NeuralNetwork/NN/neuralnetwork.pdf
+11_NeuralNetwork/NN/NN.Rproj

@@ -1,0 +1,12 @@
+---
+title: "learn_nn"
+author: "Enlik"
+date: "18 March 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 
