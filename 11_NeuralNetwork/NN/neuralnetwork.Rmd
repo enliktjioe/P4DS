@@ -544,7 +544,7 @@ ce_manual(nn_logit$net.result[[1]], dat$y)
 The local minima that the function arrive at doesn't seem to be a lot better than ours. How would you improve the neural network model?
 - [ ] Set higher amount of `rep` for the neural network 
 - [ ] Change the seed to have a different set of initial weights  
-- [ ] Change `err.fct` from `ce` to `sse`  
+- [NO] Change `err.fct` from `ce` to `sse` 
 - [ ] Add a hidden layer to the neural network in the hope that the increased complexity would increase its ability to model the pattern within the data
 
 If you pick the fourth option and plot the best repetition, you'll arrive at the following neural network plot:
@@ -672,6 +672,8 @@ We shall apply the `model.matrix` function to our original data, excluding some 
 ```{r}
 bank_m <- model.matrix(~age+job+marital+education+default+balance+housing+loan+campaign+previous+poutcome+y, data=bank)
 dim(bank_m)
+
+head(bank_m)
 ```
 
 If you inspect the names of our columns, you'll observe the dashes ("-") in some of these factor levels. That's the name of our original factor levels, and in the next step we'll use `gsub()` to remove these dashes:
