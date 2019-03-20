@@ -697,9 +697,13 @@ fml
 
 With our `fomula` and `data` ready, we can now implement our neural network. I set the cost function (`err.fct`) to be the cross-entropy function, and because it's a classification algorithm we set `linear.output` to `FALSE`. The `threshold` is set to 0.1; Our multi-layer perceptron requires the model's partial derivative of our cost function to be at least 0.1; otherwise, it should stop "descending":
 ```{r eval=F}
-set.seed(100)
-bankmar_nn <- neuralnet(formula = fml, data = bank_m, 
-                        hidden = c(5,3), rep = 3, threshold = 0.1, err.fct = "ce", linear.output = F)
+system.time({
+  set.seed(100)
+  bankmar_nn <- neuralnet(formula = fml, data = bank_m, 
+                          hidden = c(5,3), rep = 1, threshold = 0.1, err.fct = "ce",
+                          linear.output = F)
+})
+
 ```
 
 Because of how time-consuming the algorithm's training phase is, we will store the model locally. 

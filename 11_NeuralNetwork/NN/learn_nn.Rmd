@@ -9,4 +9,94 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## 
+```{r}
+library(data.table)
+library(dplyr)
+
+bank <- fread("data_input/bank-full.csv", stringsAsFactors = T)
+glimpse(bank)
+```
+
+2. Missing Steps: Data Exploration
+Make sense of the data first before going to modelling
+
+3. Scaling
+```{r}
+bank <- bank %>% 
+  mutate_if(is.numeric, scale) %>% 
+  mutate_if(is.numeric, as.vector)
+glimpse(bank)
+```
+
+4. One hot encoding for factors variable
+```{r}
+bank.hot <- model.matrix(~., bank)
+dim(bank.hot)
+colnames(bank.hot)
+# summary(bank.hot)
+```
+
+5. Create Formula (Optional)
+Watch out for spaces ` ` and `-`
+
+```{r}
+names <- gsub("-|", "", colnames(bank.hot))
+colnames(bank.hot) <- names
+fm1 <- paste(names[-c(1,44)], collapse = "+")
+fm1 <- paste("yyes", fm1, sep = "~")
+fm1 <- as.formula(fm1)
+fm1
+```
+
+6. Split Train Test
+```{r}
+set.seed(123)
+inrow <- sample(nrow(bank), 0.8*nrow(bank))
+train <- bank.hot[inrow,]
+test <- bank.hot[-inrow,]
+nrow(train)
+nrow(test)
+```
+
+7. Train the Model
+```{r}
+library(neuralnet)
+# Classifaction
+# ce = "Cross Entropy"
+bank.model <- neuralnet(formula = fm1, train[,-c(1)], err.fct = "ce", linear.output = F, rep = 1,learningrate = 0.01)
+
+# Regression
+# bank.model <- neuralnet(fm1, train, err.fct = "sse", linear.output = T)
+
+```
+
+8. Evaluate Model
+```{r}
+which.min(bank.model$result.matrix[1,])
+```
+
+
+```{r}
+pred <- compute(bank.model, test[,-c(1,44)], rep = 1)
+pred <- pred$net.result
+head(pred)
+pred <- factor(round(pred), levels = c(0,1), labels = c("no","yes"))
+table(pred)
+```
+
+
+```{r}
+label <- factor(test[,44], levels = c(0,1), labels = c("no","yes"))
+```
+
+```{r}
+table(bank$y)
+```
+
+
+```{r}
+library(caret)
+confusionMatrix(pred, label, positive = "yes")
+```
+
+
