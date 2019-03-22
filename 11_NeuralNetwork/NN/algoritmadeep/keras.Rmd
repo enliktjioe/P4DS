@@ -1,0 +1,84 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+MNIST with Keras
+
+```{r}
+library(keras)
+library(data.table)
+mnist_train <- fread("data_input/mnist/train.csv")
+mnist_test <- fread("data_input/mnist/test.csv")
+dim(mnist_train)
+```
+
+
+```{r}
+x_train <- data.matrix(mnist_train[,-1]) / 255
+x_test <- data.matrix(mnist_test) / 255
+```
+
+```{r}
+dim(mnist$train$y)
+```
+
+
+```{r}
+y_train <- to_categorical(mnist_train$label, 10)
+# y_test <- to_categorical(mnist_test[,1], 10)
+```
+
+```{r}
+model <- keras_model_sequential() 
+model %>% 
+  layer_dense(units = 256, activation = 'relu', input_shape = c(784)) %>% 
+  layer_dropout(rate = 0.4) %>% 
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 10, activation = 'softmax')
+
+summary(model)
+```
+
+```{r}
+model %>% compile(
+  loss = 'categorical_crossentropy',
+  optimizer = optimizer_rmsprop(),
+  metrics = c('accuracy')
+)
+```
+
+```{r}
+history <- model %>% fit(
+  x_train, y_train, 
+  epochs = 30, batch_size = 128, 
+  validation_split = 0.2
+)
+```
+
+```{r}
+pred <- model %>% predict_classes(x_test)
+table(pred)
+```
+
+```{r}
+plotResults <- function(images, preds){
+
+  x <- ceiling(sqrt(length(images)))
+  par(mfrow=c(x,x), mar=c(.1,.1,.1,.1))
+  
+  for (i in images){
+    m <- matrix(x_test[i,], nrow=28, byrow=TRUE)
+    m <- apply(m, 2, rev)
+    image(t(m), col=grey.colors(255), axes=FALSE)
+    text(0.05,0.1,col="red", cex=1, preds[i])
+  }
+
+}
+```
+
+```{r}
+plotResults(1:100, pred[1:100])
+```
+

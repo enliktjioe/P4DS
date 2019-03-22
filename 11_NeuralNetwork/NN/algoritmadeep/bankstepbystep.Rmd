@@ -1,0 +1,140 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+1. Read Data
+
+```{r}
+library(data.table)
+library(dplyr)
+bank <- fread('data_input/bank-full.csv', stringsAsFactors = T)
+glimpse(bank)
+```
+
+2. Missing Steps: Data Exploration
+Make sense of the data first before going into modelling!
+
+3. Scaling
+
+```{r}
+bank <- bank %>%
+  mutate_if(is.numeric, scale)
+  # mutate_if(is.numeric, as.vector)
+glimpse(bank)
+```
+
+4. One hot encoding for factors variable
+
+All variable needs to be a numeric
+
+```{r}
+bank.hot <- model.matrix(~., bank)
+colnames(bank.hot)
+# summary(bank.hot)
+```
+
+5. Create Formula (Optional)
+
+Watch Out for spaces ` ` and `-`
+
+```{r}
+names <- gsub("-| ","",colnames(bank.hot))
+colnames(bank.hot) <- names
+fml <- paste(names[-c(1,44)], collapse = "+")
+fml <- paste("yyes", fml, sep = "~")
+fml <- as.formula(fml)
+fml
+```
+
+6. Split Train Test
+
+```{r}
+set.seed(123)
+inrow <- sample(nrow(bank), 0.8*nrow(bank))
+train <- bank.hot[inrow,]
+test <- bank.hot[-inrow,]
+nrow(train)
+nrow(test)
+```
+
+7. Train the Model
+
+```{r}
+colnames(train)
+```
+```{r}
+fml
+```
+
+
+```{r}
+#Classification
+bank.model <- neuralnet(fml, train[,-c(1)], err.fct = "ce", linear.output = F, rep=1, learningrate = 0.01)
+
+#Regression
+# bank.model <- neuralnet(fml, train, err.fct = "sse", linear.output = T)
+```
+
+8. Evaluate Model
+
+```{r}
+which.min(bank.model$result.matrix[1,])
+```
+
+
+```{r}
+# pred <- compute(bank.model, test, rep=))
+pred <- compute(bank.model, test[,-c(1,44)], rep=1)
+pred <- pred$net.result
+# head(pred)
+pred <- factor(round(pred), levels=c(0,1), labels = c("no","yes"))
+table(pred)
+```
+
+```{r}
+label <- factor(test[,44], levels = c(0,1), labels = c("no","yes"))
+```
+
+```{r}
+table(bank$y)
+```
+
+
+```{r}
+library(caret)
+confusionMatrix(pred, label, positive = "yes")
+```
+
+# Quiz Answer
+
+```{r}
+bankmar_nn <- readRDS('bank_marketing_nn.rds')
+class(bankmar_nn)
+```
+
+```{r}
+length(bankmar_nn$net.result[[1]])
+```
+
+```{r}
+summary(bankmar_nn$net.result[[1]])
+```
+
+```{r}
+summary(bank$y)
+```
+
+```{r}
+pred <- factor(round(bankmar_nn$net.result[[1]]), levels = c(0,1), labels = c("no","yes"))
+table(pred)
+```
+
+```{r}
+confusionMatrix(pred, bank$y, positive = "yes")
+```
+
+```{r}
+965/(496 + 965)
+```
+

@@ -960,7 +960,7 @@ m1 <- mx.model.FeedForward.create(m1.softmax,  #the network configuration made a
                                      y = train_y, #the labels
                                      ctx = mx.cpu(),
                                      num.round = 40,  # 10 get us ~0.93 accuracy
-                                     array.batch.size = 80,
+                                     array.batch.size = 80, # RAM gak cukup, batch.size nya diperkecil
                                      momentum = 0.95,
                                      array.layout="colmajor",
                                      learning.rate = 0.001,
