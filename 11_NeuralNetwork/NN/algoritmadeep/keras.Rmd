@@ -8,8 +8,8 @@ MNIST with Keras
 ```{r}
 library(keras)
 library(data.table)
-mnist_train <- fread("data_input/mnist/train.csv")
-mnist_test <- fread("data_input/mnist/test.csv")
+mnist_train <- fread("../data_input/mnist/train.csv")
+mnist_test <- fread("../data_input/mnist/test.csv")
 dim(mnist_train)
 ```
 
