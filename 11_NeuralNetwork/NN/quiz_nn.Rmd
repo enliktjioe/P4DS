@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 
@@ -14,8 +16,14 @@ The sales director at your bank in charge of telemarketing and direct marketing 
 Instead of ringing up every customer in the database only to be rejected more than 88% of the time, she would like you to use the age, education, job profile, existing loan records (housing / personal) and outcome of the previous campaign to predict the customer's likelihood to subscribe to the new financial product (term deposit).
 
 The model output a probability (tip: bankmar_nn$net.result) so you'll need to convert that to a 'yes' or 'no'. The ground truth label is stored in your original data bank$y.
-
 ```{r}
+library(dplyr)
+bank <- read.csv("data_input/bank-full.csv", sep = ";") %>% 
+  mutate_if(is.integer, scale)
+str(bank)
+```
+
+```{r, eval = F}
 prop.table(table(bank$y)) 
 ```
 

@@ -1,6 +1,8 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  pdf_document: default
+  html_notebook: default
 ---
 
 MNIST with Keras
@@ -11,6 +13,7 @@ library(data.table)
 mnist_train <- fread("../data_input/mnist/train.csv")
 mnist_test <- fread("../data_input/mnist/test.csv")
 dim(mnist_train)
+dim(mnist_test)
 ```
 
 
@@ -19,7 +22,7 @@ x_train <- data.matrix(mnist_train[,-1]) / 255
 x_test <- data.matrix(mnist_test) / 255
 ```
 
-```{r}
+```{r, eval = FALSE}
 dim(mnist$train$y)
 ```
 
