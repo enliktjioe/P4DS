@@ -20,9 +20,12 @@ dim(mnist_test)
 ```{r}
 x_train <- data.matrix(mnist_train[,-1]) / 255
 x_test <- data.matrix(mnist_test) / 255
+
+dim(x_train)
 ```
 
 ```{r, eval = FALSE}
+mnist <- keras::dataset_mnist()
 dim(mnist$train$y)
 ```
 
