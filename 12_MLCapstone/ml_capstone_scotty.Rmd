@@ -1,0 +1,50 @@
+---
+title: "ML Capstone - Scotty"
+author: "Enlik Tjioe"
+date: "3/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Scotty is a ride-sharing business that operating in several big cities in Turkey. The company provide motorcycles ride-sharing service for Turkey’s citizen, and really value the efficiency in traveling through the traffic–the apps even give some reference to Star Trek “beam me up” to their order buttons. In this project, we are going to help them in solving some forecasting and classification problem.
+
+Scotty donated a real-time data of order transaction, which is available in data/Scotty.csv:
+```{r}
+library(tidyverse)
+scotty <- read.csv("datasets/Scotty/Scotty.csv")
+glimpse(scotty)
+```
+
+There are two option for the project:
+
+- Forecast Hourly Demands for Scotty
+- Classify “nodrivers” Condition by Region and Hour
+
+
+```{r}
+scotty <- scotty[,c(1:4, 6)]
+glimpse(scotty)
+summary(scotty)
+
+head(scotty)
+```
+
+```{r}
+library(lubridate)
+scotty$timeStamp <- ymd_hms(scotty$timeStamp)
+scotty$hour <- hour(scotty$timeStamp)
+scotty <- scotty[, -1]
+
+head(scotty)
+```
+
+```{r}
+
+```
+
+
+
+
