@@ -25,8 +25,6 @@ dim(fashion_test)
 ```
 
 ```{r}
-str(fashion_train)
-str(fashion_test)
 x_train <- data.matrix(fashion_train[,-1]) / 255
 x_test <- data.matrix(fashion_test[,-1]) / 255
 ```
