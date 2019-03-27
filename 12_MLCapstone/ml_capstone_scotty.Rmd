@@ -14,7 +14,7 @@ Scotty is a ride-sharing business that operating in several big cities in Turkey
 Scotty donated a real-time data of order transaction, which is available in data/Scotty.csv:
 ```{r}
 library(tidyverse)
-scotty <- read.csv("datasets/Scotty/Scotty.csv")
+scotty <- read.csv("datasets/Scotty/Scotty.csv", stringsAsFactors = FALSE)
 glimpse(scotty)
 ```
 
@@ -25,25 +25,65 @@ There are two option for the project:
 
 
 ```{r}
-scotty <- scotty[,c(1:4, 6)]
-glimpse(scotty)
-summary(scotty)
+scotty <- scotty %>% 
+  select(timeStamp, riderID, orderStatus, srcGeohash)
 
-head(scotty)
+glimpse(scotty)
 ```
 
 ```{r}
 library(lubridate)
 scotty$timeStamp <- ymd_hms(scotty$timeStamp)
+scotty$date <- format(scotty$timeStamp, "%Y-%m-%d")
 scotty$hour <- hour(scotty$timeStamp)
-scotty <- scotty[, -1]
+
+scotty <- scotty[,-1]
 
 head(scotty)
 ```
 
+Remove *cancelled* order
 ```{r}
-
+scotty <- scotty %>% 
+  filter(orderStatus != "cancelled")
+table(scotty$orderStatus)
 ```
+
+Remove duplicates *nodrivers* for every riderID in same day and hour
+```{r}
+scottyNoDup <- scotty %>% 
+  arrange(riderID, date, hour) %>%
+  group_by(riderID, date, hour) %>% 
+  mutate(prevOrder = lag(orderStatus, default = "FIRST"),
+         isDuplicate = ifelse(orderStatus == prevOrder, "YES", "NO"),
+         orderStatus = ifelse(isDuplicate == "YES" & orderStatus == "nodrivers", NA, orderStatus)) %>% 
+  filter(orderStatus != "FIRST") %>% 
+  mutate(nextOrder = lead(orderStatus, default = "LAST"),
+         orderStatus = ifelse(orderStatus == "nodrivers" & nextOrder == "confirmed", NA, orderStatus)) %>% 
+  filter(orderStatus != "LAST") %>% 
+  ungroup()
+          
+table(scottyNoDup$orderStatus)
+```
+
+
+Variable `scottyDPH` means scotty demands per hour 
+```{r}
+scottyDPH <- scottyNoDup %>% 
+  select(date, hour) %>% 
+  arrange(date, hour) %>% 
+  group_by(date, hour) %>% 
+  summarise(demandPerHour = n())
+  
+  
+scottyDPH
+```
+
+```{r}
+scottyDPH$date <- as.Date(scottyDPH$date)
+glimpse(scottyDPH)
+```
+
 
 
 
