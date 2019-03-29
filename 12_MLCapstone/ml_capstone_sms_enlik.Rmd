@@ -167,6 +167,8 @@ In machine learning, naive Bayes classifiers are a family of simple "probabilist
 
 Naive Bayes classifiers are highly scalable, requiring a number of parameters linear in the number of variables (features/predictors) in a learning problem.
 
+Naive Bayes methods are a set of supervised learning algorithms based on applying Bayes` theorem with the *naive* assumption.
+
 ## Train Our Model
 Using `naiveBayes` function we will train our Naive Bayes model using `sms.status.train` data
 ```{r}
@@ -282,6 +284,8 @@ sub.sms$STATUS <- sub.pred
 # write_csv(sub.sms, "enlik_spam_classification.csv")
 ```
 
+# Conclusion
+Our Naive Bayes classification model gave around 94% accuracy value based on our training model
 
 # References
 [Takes too long to create a random forest model for text data](https://community.rstudio.com/t/takes-too-long-to-create-a-random-forest-model-for-text-data/20747/2)
