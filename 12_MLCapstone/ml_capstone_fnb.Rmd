@@ -1,0 +1,394 @@
+---
+title: "ML Capstone FnB"
+author: "Enlik Tjioe"
+date: "Updated: March 29, 2019"
+output:
+  html_document:
+    css: style.css
+    highlight: tango
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Library
+```{r, message=FALSE, warning=FALSE}
+library(pacman)
+
+p_load(tidyverse)
+p_load(data.table)
+p_load(forecast)
+p_load(lubridate)
+p_load(viridis)
+```
+
+# Pre-processing
+```{r}
+fnb <- fread("datasets/Food _ Beverage/fnb_train.csv")
+glimpse(fnb)
+```
+
+```{r}
+fnb %>% distinct(outlet) %>% pull(outlet)
+```
+There are 95 unique outlets in observation, but here we only want to analyze the trends by the region of the outlets (the first character) which is A, B, C, D and E.
+
+
+To predict the visitor in each outlet region and each hour, let’s just proceed the datetime, visitor, and receipt variables, and ignore the others. The datetime is still in character class, and contain the minutes, and seconds. The outlet also contains specific number details. Here, we would convert the class of datetime, round the datetime into the floor time, and get first character of the outlet.
+```{r}
+fnb_dor <- fnb %>% 
+  distinct(datetime, outlet, receipt) %>% 
+  mutate(datetime = ymd_hms(datetime), floor_date = floor_date(datetime, "hour"), outlet_group = substr(outlet, 1, 1)) %>% 
+  select(floor_date, outlet_group, receipt)
+
+fnb_dor %>% head
+```
+
+Before we proceed futher, let’s check if we have any NA in the data.
+```{r}
+colSums(is.na(fnb_dor))
+```
+And then, we use `count` function to get the visitor variable for each hour of time and outlet.
+```{r}
+fnb_vis <- fnb_dor %>% 
+  count(floor_date, outlet_group) %>% 
+  select(datetime = floor_date, outlet = outlet_group, visitor = n)
+
+head(fnb_vis)
+```
+Now, we have a far less amount of rows. Let’s visualize our data to get the good view of how the time series look like.
+
+```{r}
+fnb_vis %>% 
+  arrange(datetime) %>% 
+  group_by(outlet) %>% 
+  ggplot(aes(datetime, visitor, col = outlet)) +
+    geom_line() +
+    scale_color_viridis(discrete = TRUE) +
+    theme_classic(base_size = 12, base_family = "mono")
+```
+
+It’s clearly showed that outlet E has the most visitors among all outlets, followed by outlet A. In outlet A and E, we also see there are trends and seasonalities, which is probably high on weekend, that happen especially after Christmas & New Year Season. For the reason, we will only use the data from second week of January. After seeing the trend and seasonality, we can confirm that there are corellations among successive observations, so we can proceed futher the time series analysis and forecasting.
+
+Then, after seeing the plot of overall data, let’s zoom out to smaller range.
+```{r}
+fnb_vis[4000:4250, ] %>% 
+  arrange(datetime) %>% 
+  group_by(outlet) %>% 
+  ggplot(aes(datetime, visitor, col = outlet)) +
+    geom_line() +
+    scale_color_viridis(discrete = TRUE) +
+    theme_classic(base_size = 12, base_family = "mono")
+```
+In zoom-out view as the plot above, we see there are also seasonalities at each hour, but looks differently in different outlets. Because we find there are multiple seasonalities in our data (weekly and hourly), it’s better to use stlm or tbats for our methods for forecasting. We will see the better understanding of the trends and seasonalities after creating the time series objects of each outlet.
+
+Before creating time series objects, from the last table above, it is showed not every hour outlets have visitors. Here, we have to create a data frame which contains every hour for each outlet, merge with the data frame we already have, and fill with 0, if there are no visitors recorded.
+```{r}
+#filter by outlet
+fnb_vis_a <- fnb_vis %>% 
+  filter(fnb_vis$outlet == "A")
+
+fnb_vis_b <- fnb_vis %>% 
+  filter(fnb_vis$outlet == "B")
+
+fnb_vis_c <- fnb_vis %>% 
+  filter(fnb_vis$outlet == "C")
+
+fnb_vis_d <- fnb_vis %>% 
+  filter(fnb_vis$outlet == "D")
+
+fnb_vis_e <- fnb_vis %>% 
+  filter(fnb_vis$outlet == "E")
+
+#create a data frame contains every hour from the interval of the data
+time_int <- data.frame(datetime = seq(
+  from = range(fnb_vis$datetime)[1],
+  to = range(fnb_vis$datetime)[2],
+  by = "hour"
+))
+
+#merge it with each outlets
+fnb_vis_a_m <- merge(x = time_int, y = fnb_vis_a, by = "datetime", all = TRUE) %>% 
+  select(datetime, visitor) %>% 
+  replace(is.na(.), 0)
+
+fnb_vis_b_m <- merge(x = time_int, y = fnb_vis_b, by = "datetime", all = TRUE) %>% 
+  select(datetime, visitor) %>% 
+  replace(is.na(.), 0)
+
+fnb_vis_c_m <- merge(x = time_int, y = fnb_vis_c, by = "datetime", all = TRUE) %>% 
+  select(datetime, visitor) %>% 
+  replace(is.na(.), 0)
+
+fnb_vis_d_m <- merge(x = time_int, y = fnb_vis_d, by = "datetime", all = TRUE) %>% 
+  select(datetime, visitor) %>% 
+  replace(is.na(.), 0)
+
+fnb_vis_e_m <- merge(x = time_int, y = fnb_vis_e, by = "datetime", all = TRUE) %>% 
+  select(datetime, visitor) %>% 
+  replace(is.na(.), 0)
+```
+
+
+Then, after binding every outlet together, in order to only use the data with date after second week of January (8 January 2018), we need to find the starting index.
+```{r}
+#create column of outlet names
+fnb_vis_a_m <- fnb_vis_a_m %>% mutate(outlet = "A")
+fnb_vis_b_m <- fnb_vis_b_m %>% mutate(outlet = "B")
+fnb_vis_c_m <- fnb_vis_c_m %>% mutate(outlet = "C")
+fnb_vis_d_m <- fnb_vis_d_m %>% mutate(outlet = "D")
+fnb_vis_e_m <- fnb_vis_e_m %>% mutate(outlet = "E")
+
+#bin dall outlets
+fnb_bind <- 
+  rbind(fnb_vis_a_m, fnb_vis_b_m, fnb_vis_c_m, fnb_vis_d_m, fnb_vis_e_m) %>% 
+  arrange(datetime, outlet)
+
+##find index with datetime of 2018-01_08 00:00:00
+which((fnb_bind$datetime == "2018-01-08 00:00:00 UTC")) + 7*5 #need to adjust the time for different Time Sone
+fnb_bind[4561:4565,]
+```
+The plots above look like a multiplicative time series, so let’s normalize the data. Here, I use two times root of square of the visitor column due to two seasonalities.
+
+```{r}
+#fliter by the datetime (after 8 January 2018)
+fnb_bind_slc <- fnb_bind %>% 
+  slice(4561:n())
+
+#normalize data
+fnb_bind_scale <- fnb_bind_slc %>% 
+  mutate(visitor = sqrt(sqrt(visitor)))
+fnb_bind_scale
+```
+
+For testing the model we will make, we split the data by last 7 days.
+```{r}
+train_idx <- c(1:(nrow(fnb_bind_slc) - (5*24*7)))
+
+fnb_train <- fnb_bind_scale[train_idx, ]
+fnb_test <- fnb_bind_scale[-train_idx, ]
+```
+
+First, we have to group the data by outlet and bundle them into list-column using nest function from tidyrpackage .
+```{r}
+p_load(tidyr)
+fnb_nest <- fnb_train %>% 
+  group_by(outlet) %>% 
+  nest(.key = "data.tbl")
+
+fnb_nest
+```
+
+After that, we create time series with aid of map function. Due to the data is in hourly period, we use frequency of 24.
+```{r}
+#Create ts data
+p_load(purrr) #for mapping
+p_load(timetk) #for accessing tk_ts function
+
+fnb_ts <- fnb_nest %>% 
+  mutate(data.ts = map(.x = data.tbl,
+                       .f = tk_ts,
+                       select = -datetime,
+                       start = 1,
+                       freq = 24))
+
+fnb_ts
+```
+
+Then, for multiseasonal time series, we have to convert the ts with msts function with two periods 24 (hourly) and 24*7=168 (weekly).
+```{r}
+#create multiseasonal ts data
+p_load(forecast)
+fnb_msts <- fnb_ts %>% 
+  mutate(data.msts = map(data.ts,
+                         msts,
+                         seasonal.periods = c(24, 24*7)))
+fnb_msts
+```
+
+# Training the models
+## Using stlm
+```{r}
+fnb_sltm <- fnb_msts %>% 
+  mutate(fit.stlm = map(data.msts, stlm))
+fnb_sltm
+```
+
+Then, forecast the next week as the periods that we need to predict.
+```{r}
+# forecast the next 7 x 24 hours
+fnb_fcast_stlm <- fnb_sltm %>% 
+  mutate(fcast.stlm = map(fit.stlm, forecast, h = 24 * 7))
+
+fnb_fcast_stlm
+```
+
+We can apply sw_sweep to get the forecast in a nice “tidy” data frame. Here, we need to convert back the value of visitor that we have normalized.
+```{r}
+#get the forecast result of the visitor for each outlet and datetime
+p_load(sweep)
+fnb_fcast_tidy <- fnb_fcast_stlm %>% 
+  mutate(sweep = map(fcast.stlm, sw_sweep, fitted = FALSE, timetk_idx = TRUE)) %>% 
+  unnest(sweep) %>% 
+  mutate(visitor = round(value*2*2),
+         lo.80 = round(lo.80^2^2),
+         lo.95 = round(lo.95^2^2),
+         hi.80 = round(hi.80^2^2),
+         hi.95 = round(hi.95^2^2)) %>% 
+  arrange(index, outlet)
+```
+
+```{r}
+fnb_fcast_tidy %>% tail
+```
+
+```{r}
+#create table to compare actual and forecast visitor
+fnb_fcast_tidy$visitor_actual <- fnb_bind_slc$visitor
+fnb_fcast_vs_actual <- fnb_fcast_tidy %>% 
+  filter(key=="forecast") %>%
+  mutate(visitor_forecast = visitor) %>%
+  select(c(outlet, index, visitor_actual, visitor_forecast)) 
+fnb_fcast_vs_actual 
+```
+
+Here, we get the mean summary of the model.
+```{r}
+#summarise the actual and forecast visitor for each outlet
+fnb_fcast_vs_actual %>%
+  group_by(outlet) %>%
+  summarise(mean(visitor_actual), mean(visitor_forecast))
+```
+Let’s calculate the rmse of the model.
+```{r}
+#calculate the rmse of the model
+p_load(yardstick)
+
+fnb_fcast_rmse <- fnb_fcast_vs_actual %>%
+  # group_by(outlet) %>%
+  rmse(truth = visitor_actual, estimate = visitor_forecast)
+fnb_fcast_rmse
+```
+
+## Using tbats
+With the same process as lstm model, we proceed the forecast with tbats.
+```{r}
+#forecast with tbats
+fnb_tbats <- fnb_msts %>%
+    mutate(fit.tbats = map(data.msts,
+                           tbats,
+                           use.box.cox=FALSE))
+fnb_tbats
+```
+
+```{r}
+#forecast the next 7 x 24 hours
+fnb_fcast_tbats <- fnb_tbats %>%
+    mutate(fcast.tbats = map(fit.tbats, forecast, h = 24*7))
+fnb_fcast_tbats
+```
+
+
+```{r}
+#get the forecast result of the visitor for each outlet and datetime
+p_load(sweep)
+fnb_fcast_tidy <- fnb_fcast_tbats %>%
+    mutate(sweep = map(fcast.tbats, sw_sweep, fitted = FALSE)) %>%
+    unnest(sweep) %>%
+    arrange(index,outlet) %>%
+    mutate(visitor = round(visitor^2^2),
+           lo.80 = round(lo.80^2^2),
+           lo.95 = round(lo.95^2^2),
+           hi.80 = round(hi.80^2^2),
+           hi.95 = round(lo.95^2^2))
+    
+fnb_fcast_tidy %>% tail
+```
+
+```{r}
+#create table to compare actual and forecast visitor
+fnb_fcast_tidy$visitor_actual <- fnb_bind_slc$visitor
+fnb_fcast_vs_actual <- fnb_fcast_tidy %>% 
+  filter(key=="forecast") %>%
+  mutate(visitor_forecast = visitor) %>%
+  select(c(outlet, index, visitor_actual, visitor_forecast)) 
+fnb_fcast_vs_actual 
+```
+
+```{r}
+#summarise the actual and forecast visitor for each outlet
+fnb_fcast_vs_actual %>%
+  group_by(outlet) %>%
+  summarise(mean(visitor_actual), mean(visitor_forecast))
+```
+
+
+```{r}
+#calculate the rmse of the model for each outlet
+p_load(yardstick)
+fnb_fcast_rmse <- fnb_fcast_vs_actual %>%
+  # group_by(outlet) %>%
+  rmse(truth = visitor_actual, estimate = visitor_forecast)
+fnb_fcast_rmse
+```
+
+# Getting the Forecast
+From rmse result, we know that lstm (43.3) is better than tbats model (57.6). So, let’s use lstm for forecasting the visitors 7 days after 22 February 2018. Here, we use the same process to get the forecast with combining train and test data we split previously.
+```{r}
+#to forecast the visitor after 22 February 2018
+fnb_nest2 <- fnb_bind_scale  %>% 
+  group_by(outlet) %>%
+  nest(.key = "data.tbl") %>%
+  mutate(data.ts = map(.x       = data.tbl,
+                       .f       = tk_ts,
+                       select   = -datetime,
+                       start    = 1,
+                       freq     = 24)) %>%
+  mutate(data.msts = map(data.ts,
+                           msts,
+                           seasonal.periods = c(24, 24*7))) %>%
+  mutate(fit.stlm = map(data.msts,
+                          stlm)) %>%
+  mutate(fcast.stlm = map(fit.stlm, forecast, h = 24*7)) %>%
+  mutate(sweep = map(fcast.stlm, sw_sweep, fitted = FALSE, timetk_idx = F)) %>%
+    unnest(sweep) %>%
+    arrange(index,outlet) %>%
+    mutate(visitor = round(value^2^2),
+           lo.80 = round(lo.80^2^2),
+           lo.95 = round(lo.95^2^2),
+           hi.80 = round(hi.80^2^2),
+           hi.95 = round(lo.95^2^2)) %>%
+  filter(key=="forecast") %>%
+  mutate(datetime = index) %>%
+  select(datetime, outlet, visitor)
+fnb_nest2
+```
+
+Let’s input the visitor values to the submission files.
+```{r}
+#load the data for submission
+fnb_sms <- fread("datasets/Food _ Beverage/fnb_submission.csv")
+
+#input the result of visitor from nest2
+fnb_sms$visitor <- fnb_nest2$visitor
+fnb_sms
+```
+
+Finally, let’s write the results for the submission.
+```{r}
+write.csv(fnb_sms, "fnb_submission - Enlik.csv")
+```
+
+
+# References
+[Forecasting Visitors of F&B Business with Some Outlets with Multiple Seasonalities](http://rstudio-pubs-static.s3.amazonaws.com/459475_af47022968d7468da9a5142a630fe7f5.html#1_pre-processing)
