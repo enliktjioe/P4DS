@@ -1,0 +1,189 @@
+---
+title: "ML Capstone - SMS Spam"
+author: "Enlik Tjioe"
+date: "Updated: March 29, 2019"
+output:
+  html_document:
+    css: style.css
+    highlight: tango
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Library
+```{r, message=FALSE, warning=FALSE}
+library(pacman)
+
+library(tidyverse)
+library(plotly)
+
+library(caret)
+library(randomForest)
+library(tm)
+library(e1071)
+library(NLP)
+library(SnowballC)
+library(wordcloud)
+library(rpart)
+library(ROCR)
+```
+
+
+## Read Data
+```{r}
+sms <- read.csv("datasets/SMS/sms.csv")
+glimpse(sms)
+```
+
+Proportion of Ham or Spam Count
+```{r}
+prop.table(table(sms$STATUS))
+ggplotly(ggplot(sms, aes(x = STATUS, fill = STATUS)) +
+  geom_bar(stat = "count"))
+```
+
+## Tokenization
+```{r}
+corpus <- VCorpus(VectorSource(sms$CONTAIN))
+corpus
+inspect(corpus[1:3])
+```
+
+
+
+
+```{r}
+# Custom function for transform corpus
+transformer <- content_transformer(function(x, pattern){
+  gsub(pattern, " ", x)
+})
+
+# Cleaning Corpus Process
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, transformer, "\\n")
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, stripWhitespace)
+corpus <- tm_map(corpus, stemDocument)
+corpus[[231]]$content
+```
+
+## Remove stopwords
+```{r}
+stopwords.id <- readLines("datasets/SMS/stopwords-id.txt") 
+
+corpus <- tm_map(corpus, removeWords, stopwords.id)
+corpus[[231]]$content
+```
+
+Use dictionary list 
+```{r}
+sms.dtm <- DocumentTermMatrix(corpus)
+freqTerms <- findFreqTerms(sms.dtm, 5)
+length(freqTerms)
+freqTerms[1:10]
+```
+
+Make a wordcloud
+```{r}
+wordcloud(corpus,
+          min.freq = 1,
+          max.words = 100,
+          random.order = FALSE,
+          colors = brewer.pal(8, "Set2"))
+```
+
+## Training/Testing dataset
+```{r}
+data.intrain <- sample(nrow(sms.dtm), nrow(sms.dtm)*0.8)
+sms.dtm.train <- sms.dtm[data.intrain, ]
+sms.dtm.test <- sms.dtm[-data.intrain, ]
+
+corpus.train <- corpus[data.intrain]
+corpus.test <- corpus[-data.intrain]
+
+sms.status.train <- sms[data.intrain, ]$STATUS
+sms.status.test <- sms[-data.intrain, ]$STATUS
+```
+
+```{r}
+prop.table(table(sms.status.train))
+```
+
+```{r}
+
+prop.table(table(sms.status.test))
+```
+
+```{r}
+dtm_train <- sms.dtm.train[, freqTerms]
+dim(dtm_train)
+
+dtm_test <- sms.dtm.test[, freqTerms]
+dim(dtm_test)
+```
+```{r}
+convert_count <-  function(x) {
+  y <- ifelse(x > 0, "yes", "no")
+  y
+}
+```
+
+```{r}
+train <- apply(dtm_train, 2, convert_count)
+test <- apply(dtm_test, 2, convert_count)
+
+test[1:10, 500:510]
+```
+
+## Training the model with Naive Bayes
+```{r}
+set.seed(151)
+system.time(classifier <- naiveBayes(train, sms.status.train))
+```
+
+## Predictions
+```{r}
+pred <- predict(classifier, test)
+```
+
+```{r}
+conf <- confusionMatrix(pred, sms.status.test)
+conf
+
+conf_matrix <- as.data.frame(table(pred, sms.status.test))
+
+ggplot(data = conf_matrix, aes(x = pred, y = sms.status.test)) +
+  geom_tile(aes(fill = Freq)) +
+  geom_text(aes(label = sprintf("%1.0f", Freq)), vjust = 1) +
+  scale_fill_gradient(low = "yellow",
+                      high = "orange",
+                      trans = "log")
+```
+
+## ROC Curve
+```{r}
+probs <- predict(classifier, test, type = "raw")
+
+pred <- prediction(probs[, "spam"], sms.status.test)
+perf_nb <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf_nb)
+```
+
+## Conclusion
+Naive Bayes had classified SMS with 92% accuracy
+
+
+## References
+[SMS Ham or Spam?](https://www.kaggle.com/devisangeetha/sms-ham-spam)
