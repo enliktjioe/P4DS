@@ -1,5 +1,5 @@
 ---
-title: "ML Capstone - SMS Spam"
+title: "Machine Learning Capstone - SMS Spam Classifier"
 author: "Enlik Tjioe"
 date: "Updated: March 29, 2019"
 output:
@@ -21,28 +21,39 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Load Library
+# Introduction
+This SMS dataset is collected from real SMS dataset with a spam/ham label for every messages.
+In this capstone project, we are going to build a classification model to predict spam from sms texts.
+
+I will using *Naive Bayes* and *Random Forest* model for this project.
+
+# Load Library
+We are using `pacman` library for easier install/load library using `p_load()` function
 ```{r, message=FALSE, warning=FALSE}
+# Easy Install/Load Library
+library(pacman)
+
 # Data Manipulation
-library(dplyr)
+p_load(dplyr)
 
 # Data Visualization
-library(ggplot2)
-library(plotly)
+p_load(ggplot2)
+p_load(plotly)
 
 # Text Mining and Wordcloud
-library(tm)
-library(e1071)
-library(SnowballC)
-library(wordcloud)
+p_load(tm)
+p_load(e1071)
+p_load(SnowballC)
+p_load(wordcloud)
 
 # Machine Learning
-library(caret)
-library(ROCR)
-library(keras)
+p_load(caret)
+p_load(ROCR)
+p_load(partykit)
+p_load(ranger)
 
 # Functional Programming
-library(purrr)
+p_load(purrr)
 ```
 
 
@@ -53,12 +64,14 @@ glimpse(sms)
 ```
 
 ## Proportion of Ham or Spam Count
+Using `ggplotly`, we will visualize proportion of ham and spam count from our sms dataset
 ```{r}
 ggplotly(ggplot(sms, aes(x = STATUS, fill = STATUS)) +
   geom_bar(stat = "count"))
 ```
 
 ## Text Mining Process
+Using some *text-mining* package, we will transform our sms text into corpus format and then clean it using `tm_map()` function.
 ```{r, message=FALSE, warning=FALSE}
 corpus <- VCorpus(VectorSource(sms$CONTAIN))
 
@@ -82,7 +95,8 @@ corpus <- tm_map(corpus, removeWords, stopwords.id)
 corpus[[1]]$content
 ```
 
-
+## Create Document Term Matrix
+We will create *document term matrix* using cleaned corpus data above
 ```{r}
 sms.dtm <- DocumentTermMatrix(corpus)
 freqTerms <- findFreqTerms(sms.dtm, 5)
@@ -91,6 +105,7 @@ freqTerms[1:10]
 ```
 
 ## Make a wordcloud
+Explore most frequent word to appear using `wordcloud()`
 ```{r}
 wordcloud(corpus,
           min.freq = 5,
@@ -98,8 +113,11 @@ wordcloud(corpus,
           random.order = FALSE,
           colors = brewer.pal(8, "Set2"))
 ```
+From wordcloud above, we can see some of most frequent words such as: kuota, pulsa, bonus, paket, etc
+
 
 # Split train and test dataset
+We will split our sms data into train and test, and we will use that to train our model using data train and evaluate usin data test.
 ```{r}
 data.intrain <- sample(nrow(sms.dtm), nrow(sms.dtm)*0.8)
 sms.dtm.train <- sms.dtm[data.intrain, ]
@@ -127,6 +145,8 @@ dim(dtm_train)
 dtm_test <- sms.dtm.test[, freqTerms]
 dim(dtm_test)
 ```
+
+We will create function to classify numeric value into *ham* or *spam* class
 ```{r}
 convert_count <-  function(x) {
   y <- ifelse(x > 0, "spam", "ham")
@@ -134,34 +154,43 @@ convert_count <-  function(x) {
 }
 ```
 
+Implement our own function `convert_count()` into data train and test
 ```{r}
-train <- apply(dtm_train, 2, convert_count)
-test <- apply(dtm_test, 2, convert_count)
+dtm_train <- apply(dtm_train, 2, convert_count)
+dtm_test <- apply(dtm_test, 2, convert_count)
 
-test[1:10, 500:510]
+dtm_test[1:10, 500:510]
 ```
 
 # Naive Bayes Model
-## Train data
+In machine learning, naive Bayes classifiers are a family of simple "probabilistic classifiers" based on applying Bayes' theorem with strong (naive) independence assumptions between the features. 
+
+Naive Bayes classifiers are highly scalable, requiring a number of parameters linear in the number of variables (features/predictors) in a learning problem.
+
+## Train Our Model
+Using `naiveBayes` function we will train our Naive Bayes model using `sms.status.train` data
 ```{r}
 set.seed(151)
-modelNB <- naiveBayes(train, sms.status.train)
+modelNB <- naiveBayes(dtm_train, sms.status.train)
 ```
 
-## Make a prediction
+## Make Prediction
+Make our prediction based on our model
 ```{r}
-pred <- predict(modelNB, test)
-dim(test)
+pred <- predict(modelNB, dtm_test)
+dim(dtm_test)
 ```
 
 ## Create Confusion Matrix
+We will check result of confusion matrix from our Naive Bayes model
 ```{r}
 conf <- confusionMatrix(pred, sms.status.test)
 conf
 dim(sms.status.test)
 ```
 
-## Visualize
+## Visualize Confusion Matrix
+We will visualize our confusion matrix into a graph
 ```{r}
 conf_matrix <- as.data.frame(table(pred, sms.status.test))
 
@@ -176,8 +205,11 @@ ggplot(data = conf_matrix, aes(x = pred, y = sms.status.test)) +
 
 
 ## ROC Curve
+ROC is the alternative method to check our model performance, inform us about how much our model *TRUE POSITIVE* and *FALSE POSITIVE* value. We will how good our performance from the curve called AUC.
+
+AUC value range from 0 to 1
 ```{r}
-probs <- predict(classifier, test, type = "raw")
+probs <- predict(modelNB, dtm_test, type = "raw")
 
 pred <- prediction(probs[, "spam"], sms.status.test)
 plot(performance(pred, measure = "tpr", x.measure = "fpr"), colorize = TRUE)
@@ -187,16 +219,17 @@ plot(performance(pred, measure = "tpr", x.measure = "fpr"), colorize = TRUE)
 auc_value <- performance(pred, measure = "auc")
 auc_value@y.values[[1]]
 ```
-AUC: Area Under the Curve = 0.98. artinya model sudah cukup baik memprediksi kelas positif dan kelas negatif. Cocok digunakan ketika ada label yang tidak seimbang (unbalance).
-
+AUC: Area Under the Curve = 0.98. That means this model was good enough to predict our *POSITIVE CLASS* and *NEGATIVE CLASS*. It's suitable when our data has unbalance label.
 
 # Submission Test
+We will try to predict *spam or ham* class for our `submissionSMS.csv` data.
 ```{r}
 sub.sms <- read.csv("datasets/SMS/submissionSMS.csv")
-glimpse(submission.sms)
+glimpse(sub.sms)
 ```
 
 ## Text Mining on SubmissionSMS Data
+Same as before, we need to transform our data first using text mining method
 ```{r, message=FALSE, warning=FALSE}
 sub.corpus <- VCorpus(VectorSource(sub.sms$CONTAIN))
 
@@ -240,17 +273,72 @@ sub.test <- apply(sub.dtm, 2, convert_count)
 dim(sub.test)
 ```
 
+## Predict Using Our Model
+We will using our `modelNB` Naive Bayes model that we've created before, and try to predict class from submission sms dataset.
 ```{r}
 sub.pred <- predict(modelNB, sub.test)
 sub.sms$STATUS <- sub.pred
 
-write_csv(sub.sms, "enlik_spam_classification.csv")
+# write_csv(sub.sms, "enlik_spam_classification.csv")
 ```
+
+
+# Random Forest Model
+```{r}
+sample.intrain <- sample(nrow(sms), nrow(sms)*0.8)
+sms.train <- sms[sample.intrain, ]
+sms.test <- sms[-sample.intrain, ]
+```
+
+```{r}
+prop.table(table(sms.train$STATUS))
+```
+
+With `method = "ranger"`, we are using `ranger` package for a fast implementation of Random Forests 
+```{r}
+set.seed(200)
+ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+modelForest <- train(STATUS ~ ., data = sms.train, method = "ranger", trControl = ctrl)
+```
+
+```{r}
+write_RDS(modelForest, "modelRanger.RDS")
+```
+
+
+```{r}
+# modelForest <-readRDS("modelforest.RDS")
+# modelForest
+```
+
+```{r}
+plot(modelForest)
+```
+
+```{r}
+table(predict(modelForest, sms.test[,-57]), sms.test[,57])
+```
+
+```{r}
+sum(predict(modelForest, sms.test[,-57]), sms.test[,57])
+```
+
+```{r}
+plot(modelForest$finalModel)
+legend("topright", colnames(modelForest$finalModel$err.rate),col=1:6,cex=0.8,fill=1:6)
+```
+
+```{r}
+modelForest$finalModel
+```
+
+
 
 
 # Conclusion
 Naive Bayes had classified SMS with 92% accuracy
 
-
 # References
-[SMS Ham or Spam?](https://www.kaggle.com/devisangeetha/sms-ham-spam)
+[Takes too long to create a random forest model for text data](https://community.rstudio.com/t/takes-too-long-to-create-a-random-forest-model-for-text-data/20747/2)
+
+[Wikipedia Naive Bayes classifier](https://en.wikipedia.org/wiki/Naive_Bayes_classifier)
