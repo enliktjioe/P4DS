@@ -1,0 +1,124 @@
+---
+title: "ML Capstone Sentiment Analysis"
+author: "Enlik Tjioe"
+date: "Updated: March 29, 2019"
+output:
+  html_document:
+    css: style.css
+    highlight: tango
+    number_sections: yes
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Library
+We will use `pacman` library for easier load/install packages with `p_load()` function
+```{r}
+library(pacman)
+```
+
+This tweets dataset is collected by Team Algoritma for educational purposes. In this project, we are going to analyze and build a classification model to predict sentiment for each tweets from “#YoutubeRewind2018”
+
+The data is download by using twitter’s API. The data is available to load:
+
+`fileEncoding="latin1"` was used to solve *Invalid multibyte* issue in relation with *file encoding*
+# Pre-processing Data
+```{r}
+tweets <- read.csv("datasets/Sentiment Analysis/train.csv", fileEncoding="latin1")
+head(tweets)
+```
+
+## Proportion per Sentiment Type
+```{r}
+prop.table(table(tweets$sentiment_type))
+```
+We can see that 40% of the tweets give *negative* sentiment, which the most one.
+
+
+```{r}
+smallData <- as.data.frame(prop.table(table(tweets$sentiment_type)))
+colnames(smallData) <- c("Sentiment", "Proportion")
+smallData
+```
+
+## Data Visualization
+```{r}
+p_load(ggplot2)
+p_load(gridExtra)
+
+# create blank theme for pie chart, otherwise it looks awful in my opinion
+blank_theme = theme_minimal() + theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks = element_blank(),
+    plot.title = element_text(size = 14, face = 'bold') )
+
+gbar = ggplot(smallData, aes(x = Sentiment, y = Proportion, fill = Sentiment))
+gpie = ggplot(smallData, aes(x = "", y = Proportion, fill = Sentiment))
+
+plot1 = gbar + geom_bar(stat = 'identity') + ggtitle("Overall Sentiment") + 
+        theme(plot.title = element_text(size = 14, face = 'bold', vjust = 1),
+              axis.title.y = element_text(vjust = 2), axis.title.x = element_text(vjust = -1))
+
+plot2 = gpie + geom_bar(stat = 'identity') + coord_polar("y", start = 0) + blank_theme +
+        theme(axis.title.x = element_blank()) + geom_text(aes(y = Proportion/3 + c(0, cumsum(Proportion)[-length(Proportion)]),
+        label = round(Proportion, 2)), size = 4) + ggtitle('Overall Sentiment')
+
+grid.arrange(plot1, plot2, ncol = 1, nrow = 2)
+```
+
+With data visualization, it's easier to see the proportion of sentiment
+
+# Analysis of Tweets Text
+```{r, warning=FALSE, message=FALSE}
+p_load(tm) ; p_load(SnowballC) ; p_load(wordcloud)
+
+# Custom function for transform corpus
+transformer <- content_transformer(function(x, pattern){
+  gsub(pattern, " ", x)
+})
+  
+corpus <- Corpus(VectorSource(tweets$text))
+  
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, transformer, "\\n")
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+corpus <- tm_map(corpus, stripWhitespace)
+corpus <- tm_map(corpus, stemDocument)
+
+tweets.dtm <- DocumentTermMatrix(corpus)
+
+dim(tweets.dtm)
+  
+```
+
+```{r, warning=FALSE, message=FALSE}
+freqWords <- findFreqTerms(tweets.dtm, lowfreq = 3)
+length(freqWords)
+freqWords[1:10]
+```
+
+##  Visualize in Word Cloud
+```{r, fig.width=8, fig.height=8}
+wordcloud(corpus,
+          min.freq = 5,
+          max.words = 100,
+          random.order = FALSE,
+          colors = brewer.pal(5, "Set1"))
+```
+
+
+
