@@ -283,61 +283,6 @@ sub.sms$STATUS <- sub.pred
 ```
 
 
-# Random Forest Model
-```{r}
-sample.intrain <- sample(nrow(sms), nrow(sms)*0.8)
-sms.train <- sms[sample.intrain, ]
-sms.test <- sms[-sample.intrain, ]
-```
-
-```{r}
-prop.table(table(sms.train$STATUS))
-```
-
-With `method = "ranger"`, we are using `ranger` package for a fast implementation of Random Forests 
-```{r}
-set.seed(200)
-ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
-modelForest <- train(STATUS ~ ., data = sms.train, method = "ranger", trControl = ctrl)
-```
-
-```{r}
-write_RDS(modelForest, "modelRanger.RDS")
-```
-
-
-```{r}
-# modelForest <-readRDS("modelforest.RDS")
-# modelForest
-```
-
-```{r}
-plot(modelForest)
-```
-
-```{r}
-table(predict(modelForest, sms.test[,-57]), sms.test[,57])
-```
-
-```{r}
-sum(predict(modelForest, sms.test[,-57]), sms.test[,57])
-```
-
-```{r}
-plot(modelForest$finalModel)
-legend("topright", colnames(modelForest$finalModel$err.rate),col=1:6,cex=0.8,fill=1:6)
-```
-
-```{r}
-modelForest$finalModel
-```
-
-
-
-
-# Conclusion
-Naive Bayes had classified SMS with 92% accuracy
-
 # References
 [Takes too long to create a random forest model for text data](https://community.rstudio.com/t/takes-too-long-to-create-a-random-forest-model-for-text-data/20747/2)
 
