@@ -169,3 +169,7 @@ plot(perf_nb)
 
 ## Conclusion
 Naive Bayes had classified SMS with 92% accuracy
+
+
+## References
+[SMS Ham or Spam?](https://www.kaggle.com/devisangeetha/sms-ham-spam)

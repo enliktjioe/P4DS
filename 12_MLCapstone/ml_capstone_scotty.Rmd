@@ -85,6 +85,7 @@ glimpse(scottyDPH)
 ```
 
 
-
+## References
+[Scotty Hourly Demand Forecast](https://api.rpubs.com/aepoetry/scotty_forecast)
 
 
