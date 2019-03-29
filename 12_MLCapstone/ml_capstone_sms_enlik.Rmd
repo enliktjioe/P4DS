@@ -23,51 +23,52 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Load Library
 ```{r, message=FALSE, warning=FALSE}
-library(pacman)
+# Data Manipulation
+library(dplyr)
 
-library(tidyverse)
+# Data Visualization
+library(ggplot2)
 library(plotly)
 
-library(caret)
-library(randomForest)
+# Text Mining and Wordcloud
 library(tm)
 library(e1071)
-library(NLP)
 library(SnowballC)
 library(wordcloud)
-library(rpart)
+
+# Machine Learning
+library(caret)
 library(ROCR)
+library(keras)
+
+# Functional Programming
+library(purrr)
 ```
 
 
-## Read Data
+# Pre-processing Data
 ```{r}
 sms <- read.csv("datasets/SMS/sms.csv")
 glimpse(sms)
 ```
 
-Proportion of Ham or Spam Count
+## Proportion of Ham or Spam Count
 ```{r}
-prop.table(table(sms$STATUS))
 ggplotly(ggplot(sms, aes(x = STATUS, fill = STATUS)) +
   geom_bar(stat = "count"))
 ```
 
-## Tokenization
-```{r}
+## Text Mining Process
+```{r, message=FALSE, warning=FALSE}
 corpus <- VCorpus(VectorSource(sms$CONTAIN))
-corpus
-inspect(corpus[1:3])
-```
 
-
-
-
-```{r}
 # Custom function for transform corpus
 transformer <- content_transformer(function(x, pattern){
   gsub(pattern, " ", x)
 })
+
+# stopword for Indonesian language
+stopwords.id <- readLines("datasets/SMS/stopwords-id.txt") 
 
 # Cleaning Corpus Process
 corpus <- tm_map(corpus, content_transformer(tolower))
@@ -76,18 +77,12 @@ corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
 corpus <- tm_map(corpus, stripWhitespace)
 corpus <- tm_map(corpus, stemDocument)
-corpus[[231]]$content
-```
-
-## Remove stopwords
-```{r}
-stopwords.id <- readLines("datasets/SMS/stopwords-id.txt") 
-
 corpus <- tm_map(corpus, removeWords, stopwords.id)
-corpus[[231]]$content
+
+corpus[[1]]$content
 ```
 
-Use dictionary list 
+
 ```{r}
 sms.dtm <- DocumentTermMatrix(corpus)
 freqTerms <- findFreqTerms(sms.dtm, 5)
@@ -95,16 +90,16 @@ length(freqTerms)
 freqTerms[1:10]
 ```
 
-Make a wordcloud
+## Make a wordcloud
 ```{r}
 wordcloud(corpus,
-          min.freq = 1,
+          min.freq = 5,
           max.words = 100,
           random.order = FALSE,
           colors = brewer.pal(8, "Set2"))
 ```
 
-## Training/Testing dataset
+# Split train and test dataset
 ```{r}
 data.intrain <- sample(nrow(sms.dtm), nrow(sms.dtm)*0.8)
 sms.dtm.train <- sms.dtm[data.intrain, ]
@@ -122,7 +117,6 @@ prop.table(table(sms.status.train))
 ```
 
 ```{r}
-
 prop.table(table(sms.status.test))
 ```
 
@@ -135,7 +129,7 @@ dim(dtm_test)
 ```
 ```{r}
 convert_count <-  function(x) {
-  y <- ifelse(x > 0, "yes", "no")
+  y <- ifelse(x > 0, "spam", "ham")
   y
 }
 ```
@@ -147,21 +141,28 @@ test <- apply(dtm_test, 2, convert_count)
 test[1:10, 500:510]
 ```
 
-## Training the model with Naive Bayes
+# Naive Bayes Model
+## Train data
 ```{r}
 set.seed(151)
-system.time(classifier <- naiveBayes(train, sms.status.train))
+modelNB <- naiveBayes(train, sms.status.train)
 ```
 
-## Predictions
+## Make a prediction
 ```{r}
-pred <- predict(classifier, test)
+pred <- predict(modelNB, test)
+dim(test)
 ```
 
+## Create Confusion Matrix
 ```{r}
 conf <- confusionMatrix(pred, sms.status.test)
 conf
+dim(sms.status.test)
+```
 
+## Visualize
+```{r}
 conf_matrix <- as.data.frame(table(pred, sms.status.test))
 
 ggplot(data = conf_matrix, aes(x = pred, y = sms.status.test)) +
@@ -172,18 +173,84 @@ ggplot(data = conf_matrix, aes(x = pred, y = sms.status.test)) +
                       trans = "log")
 ```
 
+
+
 ## ROC Curve
 ```{r}
 probs <- predict(classifier, test, type = "raw")
 
 pred <- prediction(probs[, "spam"], sms.status.test)
-perf_nb <- performance(pred, measure = "tpr", x.measure = "fpr")
-plot(perf_nb)
+plot(performance(pred, measure = "tpr", x.measure = "fpr"), colorize = TRUE)
 ```
 
-## Conclusion
+```{r}
+auc_value <- performance(pred, measure = "auc")
+auc_value@y.values[[1]]
+```
+AUC: Area Under the Curve = 0.98. artinya model sudah cukup baik memprediksi kelas positif dan kelas negatif. Cocok digunakan ketika ada label yang tidak seimbang (unbalance).
+
+
+# Submission Test
+```{r}
+sub.sms <- read.csv("datasets/SMS/submissionSMS.csv")
+glimpse(submission.sms)
+```
+
+## Text Mining on SubmissionSMS Data
+```{r, message=FALSE, warning=FALSE}
+sub.corpus <- VCorpus(VectorSource(sub.sms$CONTAIN))
+
+# Custom function for transform corpus
+transformer <- content_transformer(function(x, pattern){
+  gsub(pattern, " ", x)
+})
+
+# stopword for Indonesian language
+stopwords.id <- readLines("datasets/SMS/stopwords-id.txt") 
+
+# Cleaning Corpus Process
+sub.corpus <- tm_map(sub.corpus, content_transformer(tolower))
+sub.corpus <- tm_map(sub.corpus, transformer, "\\n")
+sub.corpus <- tm_map(sub.corpus, removePunctuation)
+sub.corpus <- tm_map(sub.corpus, removeNumbers)
+sub.corpus <- tm_map(sub.corpus, stripWhitespace)
+sub.corpus <- tm_map(sub.corpus, stemDocument)
+sub.corpus <- tm_map(sub.corpus, removeWords, stopwords.id)
+
+sub.corpus[[1]]$content
+```
+
+
+```{r}
+sub.dtm <- DocumentTermMatrix(sub.corpus)
+sub.freqTerms <- findFreqTerms(sub.dtm, 5)
+length(sub.freqTerms)
+sub.freqTerms[1:10]
+```
+
+```{r}
+convert_count <-  function(x) {
+  y <- ifelse(x > 0, "spam", "ham")
+  y
+}
+```
+
+```{r}
+sub.test <- apply(sub.dtm, 2, convert_count)
+dim(sub.test)
+```
+
+```{r}
+sub.pred <- predict(modelNB, sub.test)
+sub.sms$STATUS <- sub.pred
+
+write_csv(sub.sms, "enlik_spam_classification.csv")
+```
+
+
+# Conclusion
 Naive Bayes had classified SMS with 92% accuracy
 
 
-## References
+# References
 [SMS Ham or Spam?](https://www.kaggle.com/devisangeetha/sms-ham-spam)
