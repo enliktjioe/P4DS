@@ -284,6 +284,37 @@ sub.sms$STATUS <- sub.pred
 # write_csv(sub.sms, "enlik_spam_classification.csv")
 ```
 
+
+# Random Forest Model
+```{r}
+sample.intrain <- sample(nrow(sms), nrow(sms)*0.8)
+sms.train <- sms[sample.intrain, ]
+sms.test <- sms[-sample.intrain, ]
+```
+
+```{r}
+prop.table(table(sms.train$STATUS))
+```
+
+With `method = "ranger"`, we are using `ranger` package for a fast implementation of Random Forests 
+```{r}
+# set.seed(200)
+# ctrl <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+# modelForest <- train(STATUS ~ ., data = sms.train, method = "ranger", trControl = ctrl)
+```
+
+```{r}
+# modelForest
+# write_rds(modelForest, "modelForest.RDS")
+```
+
+```{r}
+p_load(readr)
+modelForest <- read_rds("modelForest.RDS")
+modelForest
+```
+
+
 # Conclusion
 Our Naive Bayes classification model gave around 94% accuracy value based on our training model
 
