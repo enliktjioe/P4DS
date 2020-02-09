@@ -32,21 +32,49 @@ salesData$THIRD <- as.factor(salesData$THIRD)
 str(salesData)
 ```
 
+THIRD = 1
 ```{r}
-salesData <- salesData %>% 
-              dplyr::group_by(salesData$PRODUCER) %>% 
-              dplyr::summarize(count = n(), totalSales = sum(SALES_SUM)) %>% 
-              dplyr::arrange(desc(count))
-salesData
+salesFirst <- salesData %>% 
+  dplyr::group_by(salesData$PRODUCER) %>% 
+  dplyr::filter(THIRD == "1") %>% 
+  dplyr::summarize(totalSalesFirst = sum(SALES_SUM)) %>% 
+  dplyr::arrange(desc(totalSalesFirst))
+
+salesFirst
+```
+
+THIRD = 3
+```{r}
+salesThird <- salesData %>% 
+  dplyr::group_by(salesData$PRODUCER) %>% 
+  dplyr::filter(THIRD == "3") %>% 
+  dplyr::summarize(totalSalesThird = sum(SALES_SUM)) %>% 
+  dplyr::arrange(desc(totalSalesThird))
+
+salesThird
+```
+
+```{r}
+df.joinSales <- dplyr::left_join(salesFirst, salesThird, by = "salesData$PRODUCER")
+names(df.joinSales)[1] <- "PRODUCER"
+
+df.salesGrowth <- df.joinSales %>% 
+  group_by(PRODUCER) %>% 
+  summarize(totalSalesFirst, totalSalesThird, salesGrowth = abs(round((totalSalesThird - totalSalesFirst), digits = 2))) %>% 
+  arrange(desc(salesGrowth)) %>% 
+  head(7)
+
+df.salesGrowth
 ```
 
 # Data Visualization
 ```{r}
-ggplot(salesData, aes(x = main_category, y = count)) +
-  geom_bar(stat = "identity", aes(fill = main_category), show.legend = F) +
-  labs(title = "Total Projects per Category", x = "Category Name", y = "Total") +
+ggplot(df.salesGrowth, aes(x = reorder(PRODUCER, -salesGrowth), y = salesGrowth)) +
+  geom_bar(stat = "identity", aes(fill = salesGrowth), show.legend = F) +
+  labs(title = "Total Growth Sales per Producer", x = "Producer", y = "Total Growth") +
   theme(axis.text.x = element_text(angle=90, hjust=1),
         plot.title=element_text(hjust=0.5)) +
-  geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+  geom_text(aes(label = paste0(salesGrowth, " €")), vjust = -0.5) +
+  ylim(0, 600)
 ```
 
