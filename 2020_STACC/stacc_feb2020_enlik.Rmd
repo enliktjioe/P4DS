@@ -1,0 +1,52 @@
+---
+title: "stacc_feb2020_enlik"
+author: "Enlik Tjioe"
+date: "2/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Library
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(knitr)
+
+options(scipen = 9999)
+```
+
+
+# Pre-processing Data
+```{r}
+salesData <- read.csv("data.csv")
+str(salesData)
+```
+
+```{r}
+salesData <- salesData %>% 
+              dplyr::filter(THIRD == 1 | THIRD == 3)
+salesData$THIRD <- as.factor(salesData$THIRD)
+str(salesData)
+```
+
+```{r}
+salesData <- salesData %>% 
+              dplyr::group_by(salesData$PRODUCER) %>% 
+              dplyr::summarize(count = n(), totalSales = sum(SALES_SUM)) %>% 
+              dplyr::arrange(desc(count))
+salesData
+```
+
+# Data Visualization
+```{r}
+ggplot(salesData, aes(x = main_category, y = count)) +
+  geom_bar(stat = "identity", aes(fill = main_category), show.legend = F) +
+  labs(title = "Total Projects per Category", x = "Category Name", y = "Total") +
+  theme(axis.text.x = element_text(angle=90, hjust=1),
+        plot.title=element_text(hjust=0.5)) +
+  geom_text(aes(label = paste0(round(count/1000, 1), "K")), vjust = -0.5)
+```
+
