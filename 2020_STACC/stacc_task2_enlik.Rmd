@@ -1,0 +1,32 @@
+---
+title: "STACC Test - Task 2"
+author: "Enlik Tjioe"
+date: "2/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Library
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(lubridate)
+
+options(scipen = 9999)
+```
+
+
+## Data Pre-processing
+```{r}
+marketData <- read.csv("market_test_data.csv")
+marketData$date <- dmy(marketData$date)
+str(marketData)
+```
+
+```{r}
+unique(marketData$date)
+```
+
