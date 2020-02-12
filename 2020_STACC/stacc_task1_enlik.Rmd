@@ -22,14 +22,14 @@ options(scipen = 9999)
 # Pre-processing Data
 ```{r}
 salesData <- read.csv("data.csv")
-str(salesData)
+glimpse(salesData)
 ```
 
 ```{r}
 salesData <- salesData %>% 
               dplyr::filter(THIRD == 1 | THIRD == 3)
 salesData$THIRD <- as.factor(salesData$THIRD)
-str(salesData)
+glimpse(salesData)
 ```
 
 THIRD = 1
