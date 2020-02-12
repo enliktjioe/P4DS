@@ -9,21 +9,18 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Plan:
-- Setup the train and test data (filter all row, year < 2015)
-- Setup the data to predict (all row with year == 2015)
-- Build the ML Classification model
+# Introduction
+The dataset is SP500 stock index and different variables that show the current business climate from year 2000 to 2014.
+The goal of this analysis is to create Machine Learning model to predict `label` variable for the year 2015.
 
-Reference:
-file:///Users/enlik/GitRepo/_old/algoritma_ds_academy/07_ClassificationML01/C1/classification1.html#26_credit_risk_analysis__modeling:_loans_from_q4_2017
-
+label = 1 means, that product should be in the market
+label = 0 means, that product should be out of market
 
 
 # Library
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(lubridate)
-library(caret)
 
 options(scipen = 9999)
 ```
@@ -33,28 +30,19 @@ options(scipen = 9999)
 ```{r}
 marketData <- read.csv("market_test_data.csv")
 marketData$date <- dmy(marketData$date) # change data type of variable "date" from factor to Date
-marketData <- select(marketData, -c("SP500")) # remove "SP500" variable 
-str(marketData)
+marketData <- select(marketData, -c("SP500")) # remove "SP500" variable
+glimpse(marketData)
 ```
 
-Filter data
+## Filter data to include only rows from year before 2015 
 ```{r}
-before2015 <- marketData %>% 
-  filter(year(marketData$date) < 2015)
-str(before2015)
+before2015 <- marketData %>%
+  filter(year(marketData$date) < 2015) %>% # filter data only for date before year 2015
+  select(-c("date")) # remove column "date"
+glimpse(before2015)
 ```
 
-```{r}
-prop.table(table(before2015$label))
-```
-
-Testing LR model
-```{r}
-lr.model1 <- glm(label ~ usman.50, data = before2015, family = "binomial")
-summary(lr.model1)
-```
-
-Setup data train and test
+## Split data train and test for our Machine Learning model
 ```{r}
 set.seed(123)
 intrain <- sample(nrow(before2015), nrow(before2015)*0.8)
@@ -62,34 +50,59 @@ before2015.train <- before2015[intrain, ]
 before2015.test <- before2015[-intrain, ]
 ```
 
+## Creating Logistic Regression model as our first model
 ```{r}
-lr.model2 <- glm(label ~ usman.50 + glocom.50 + usman.40 + glocom.40 + usman.growing + glocom.growing + usman.accel + glocom.accel + usman.3mgrowth	+ glocom.3mgrowth	+ profitgrowth.pos + revgrowth.pos + profitgrowth.accel + revgrowth.accel + industry.growing + industry.accel, data = before2015.train, family = "binomial")
-summary(lr.model2)
+model1.lr <- glm(label ~ ., data = before2015.train, family = "binomial") # create model with all predictors
+summary(model1.lr)
+```
+From our logistic regression model summary above, we found out that variable `glocom.40` shows NA value. It means that this variable has very high correlation with other variable which is `usman.40`. Removing one of them will solve the problem
+[Reference](https://stats.stackexchange.com/questions/212903/na-in-glm-model)
+
+
+## Removing `glocom.40` variable in our model
+`glm()` function is used to construct our binomial Logistic Regression model in R 
+```{r}
+model1.lr <- glm(label ~ . - glocom.40, data = before2015.train, family = "binomial")
+summary(model1.lr)
 ```
 
+## Create the new variable `pred.label` for test dataset
+Using `predict()` function specifying the:
+- Model to be used for prediction (`model1.lr`)
+- Dataset on which the model should predict (`before2015.test`) with a `response` type, in order to make the prediction based on the scale of the response variable (which means: `probabilities`).
+
 ```{r}
-before2015.test$pred.label <- predict(lr.model2, before2015.test, type = "response")
-before2015.test
+before2015.test$pred.label <- predict(model1.lr, before2015.test, type = "response")
+glimpse(before2015.test)
 ```
 
+Visualize the distribution of probabilities of a label default from our prediction vector:
+```{r}
+hist(before2015.test$pred.label, breaks=20)
+```
 
+## Create Confusion Matrix table
+For the first try, we setup our `label` threshold at 0.5 which means will predict any labels that exceed that threshold as `label = 1`.
+Threshold 0.5 may not always be the right threshold setting and we’ll try to change it later
 ```{r}
 table("predicted"=as.numeric(before2015.test$pred.label>=0.5), "actual"=before2015.test$label)
 ```
+Observe from the confusion matrix that: 
+- Out of the 28 `label = 1` we classified 26 of them correctly
+- Out of the 8 `label = 0` we classified 7 of them correctly
+- Out of the 36 `decisions for SP500 stocks to be in market (1) or not (0)` in our test dataset, we classified 33 of them correctly
 
-```{r}
-confusionMatrix(before2015.test$label, before2015.test$label)
-```
-
-
+## Filter Data for year 2015
 ```{r}
 in2015 <- marketData %>% 
   filter(year(marketData$date) == 2015)
-str(in2015)
+glimpse(in2015)
 ```
 
+
+## Predict the label for year 2015
 ```{r}
-in2015$label <- predict(lr.model2, in2015, type="response")
+in2015$label <- predict(model1.lr, in2015, type="response")
 in2015
 ```
 
@@ -97,6 +110,8 @@ in2015
 in2015$label = as.numeric(in2015$label>=0.5)
 in2015
 ```
+
+
 
 Export `in2015` dataframe to csv file
 ```{r}
