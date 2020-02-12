@@ -13,8 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 The dataset is SP500 stock index and different variables that show the current business climate from year 2000 to 2014.
 The goal of this analysis is to create Machine Learning model to predict `label` variable for the year 2015.
 
-label = 1 means, that product should be in the market
-label = 0 means, that product should be out of market
+- label = 1 means, that product should be in the market
+- label = 0 means, that product should be out of market
 
 
 # Library
@@ -68,6 +68,7 @@ summary(model1.lr)
 
 ## Create the new variable `pred.label` for test dataset
 Using `predict()` function specifying the:
+
 - Model to be used for prediction (`model1.lr`)
 - Dataset on which the model should predict (`before2015.test`) with a `response` type, in order to make the prediction based on the scale of the response variable (which means: `probabilities`).
 
@@ -87,10 +88,19 @@ Threshold 0.5 may not always be the right threshold setting and we’ll try to c
 ```{r}
 table("predicted"=as.numeric(before2015.test$pred.label>=0.5), "actual"=before2015.test$label)
 ```
-Observe from the confusion matrix that: 
+Observe from the confusion matrix that:
+
 - Out of the 28 `label = 1` we classified 26 of them correctly
 - Out of the 8 `label = 0` we classified 7 of them correctly
 - Out of the 36 `decisions for SP500 stocks to be in market (1) or not (0)` in our test dataset, we classified 33 of them correctly
+
+## New Threshold
+Set the threshold to be more sensitive to `positive cases (label = 1 is correct)`.
+Let’s see what happen if we were to predict the label when the probability exceed `0.3`
+```{r}
+table("predicted"=as.numeric(before2015.test$pred.label>=0.3), "actual"=before2015.test$label)
+```
+We've increased accuracy the `number of correct positive cases` from 26 to 28. 
 
 ## Filter Data for year 2015
 ```{r}
@@ -99,21 +109,18 @@ in2015 <- marketData %>%
 glimpse(in2015)
 ```
 
-
 ## Predict the label for year 2015
 ```{r}
 in2015$label <- predict(model1.lr, in2015, type="response")
-in2015
 ```
 
+## Set the label based on `threshold 0.3`
 ```{r}
-in2015$label = as.numeric(in2015$label>=0.5)
-in2015
+in2015$label = as.numeric(in2015$label>=0.3)
+in2015[,c("date","label")] #showing all 12 months label value for year 2015
 ```
 
-
-
-Export `in2015` dataframe to csv file
+## Export `in2015` dataframe to csv file
 ```{r}
 write.csv(in2015, "labels_for_2015.csv", row.names = FALSE)
 ```
