@@ -9,11 +9,21 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Plan:
+- Setup the train and test data (filter all row, year < 2015)
+- Setup the data to predict (all row with year == 2015)
+- Build the ML Classification model
+
+Reference:
+file:///Users/enlik/GitRepo/_old/algoritma_ds_academy/07_ClassificationML01/C1/classification1.html#26_credit_risk_analysis__modeling:_loans_from_q4_2017
+
+
 
 # Library
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(lubridate)
+library(caret)
 
 options(scipen = 9999)
 ```
@@ -22,11 +32,74 @@ options(scipen = 9999)
 ## Data Pre-processing
 ```{r}
 marketData <- read.csv("market_test_data.csv")
-marketData$date <- dmy(marketData$date)
+marketData$date <- dmy(marketData$date) # change data type of variable "date" from factor to Date
+marketData <- select(marketData, -c("SP500")) # remove "SP500" variable 
 str(marketData)
 ```
 
+Filter data
 ```{r}
-unique(marketData$date)
+before2015 <- marketData %>% 
+  filter(year(marketData$date) < 2015)
+str(before2015)
+```
+
+```{r}
+prop.table(table(before2015$label))
+```
+
+Testing LR model
+```{r}
+lr.model1 <- glm(label ~ usman.50, data = before2015, family = "binomial")
+summary(lr.model1)
+```
+
+Setup data train and test
+```{r}
+set.seed(123)
+intrain <- sample(nrow(before2015), nrow(before2015)*0.8)
+before2015.train <- before2015[intrain, ]
+before2015.test <- before2015[-intrain, ]
+```
+
+```{r}
+lr.model2 <- glm(label ~ usman.50 + glocom.50 + usman.40 + glocom.40 + usman.growing + glocom.growing + usman.accel + glocom.accel + usman.3mgrowth	+ glocom.3mgrowth	+ profitgrowth.pos + revgrowth.pos + profitgrowth.accel + revgrowth.accel + industry.growing + industry.accel, data = before2015.train, family = "binomial")
+summary(lr.model2)
+```
+
+```{r}
+before2015.test$pred.label <- predict(lr.model2, before2015.test, type = "response")
+before2015.test
+```
+
+
+```{r}
+table("predicted"=as.numeric(before2015.test$pred.label>=0.5), "actual"=before2015.test$label)
+```
+
+```{r}
+confusionMatrix(before2015.test$label, before2015.test$label)
+```
+
+
+```{r}
+in2015 <- marketData %>% 
+  filter(year(marketData$date) == 2015)
+str(in2015)
+```
+
+```{r}
+in2015$label <- predict(lr.model2, in2015, type="response")
+in2015
+```
+
+```{r}
+in2015$label = as.numeric(in2015$label>=0.5)
+in2015
+```
+
+Export `in2015` dataframe to csv file
+```{r}
+write.csv(in2015, "labels_for_2015.csv", row.names = FALSE)
 ```
 
