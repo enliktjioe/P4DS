@@ -1,5 +1,5 @@
 ---
-title: "stacc_feb2020_enlik"
+title: "STACC Test - Task 1"
 author: "Enlik Tjioe"
 date: "2/9/2020"
 output: html_document
@@ -9,13 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Introduction
+- The dataset `data.csv` contains sales data from retail store in Estonia
+- The purpose of this task is to do graph visualization for top-7 producers by sales growth
+
 
 # Library
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(knitr)
-
-options(scipen = 9999)
 ```
 
 
@@ -25,35 +27,38 @@ salesData <- read.csv("data.csv")
 glimpse(salesData)
 ```
 
+## Filter dataset only for sales in `THIRD == 1` or `THIRD = 3`
 ```{r}
 salesData <- salesData %>% 
-              dplyr::filter(THIRD == 1 | THIRD == 3)
+              filter(THIRD == 1 | THIRD == 3)
 salesData$THIRD <- as.factor(salesData$THIRD)
 glimpse(salesData)
 ```
 
-THIRD = 1
-```{r}
+## Filter dataset for sales in `THIRD = 1` and summarize it
+```{r warning=FALSE}
 salesFirst <- salesData %>% 
-  dplyr::group_by(salesData$PRODUCER) %>% 
-  dplyr::filter(THIRD == "1") %>% 
-  dplyr::summarize(totalSalesFirst = sum(SALES_SUM)) %>% 
-  dplyr::arrange(desc(totalSalesFirst))
+  group_by(salesData$PRODUCER) %>% 
+  filter(THIRD == "1") %>% 
+  summarize(totalSalesFirst = sum(SALES_SUM)) %>% 
+  arrange(desc(totalSalesFirst))
 
 salesFirst
 ```
 
-THIRD = 3
-```{r}
+## Filter dataset for sales in `THIRD = 3` and summarize it
+```{r warning=FALSE}
 salesThird <- salesData %>% 
-  dplyr::group_by(salesData$PRODUCER) %>% 
-  dplyr::filter(THIRD == "3") %>% 
-  dplyr::summarize(totalSalesThird = sum(SALES_SUM)) %>% 
-  dplyr::arrange(desc(totalSalesThird))
+  group_by(salesData$PRODUCER) %>% 
+  filter(THIRD == "3") %>% 
+  summarize(totalSalesThird = sum(SALES_SUM)) %>% 
+  arrange(desc(totalSalesThird))
 
 salesThird
 ```
 
+## Join the dataset between `salesFirst` and `salesThird`
+Find the `salesGrowth` with difference value of `totalSalesThird` and `totalSalesFirst`.
 ```{r}
 df.joinSales <- dplyr::left_join(salesFirst, salesThird, by = "salesData$PRODUCER")
 names(df.joinSales)[1] <- "PRODUCER"
@@ -62,12 +67,13 @@ df.salesGrowth <- df.joinSales %>%
   group_by(PRODUCER) %>% 
   summarize(totalSalesFirst, totalSalesThird, salesGrowth = abs(round((totalSalesThird - totalSalesFirst), digits = 2))) %>% 
   arrange(desc(salesGrowth)) %>% 
-  head(7)
+  head(7) # find top-7 producer with highest sales growth
 
 df.salesGrowth
 ```
 
 # Data Visualization
+Using `ggplot` R library to create graph visualization 
 ```{r}
 ggplot(df.salesGrowth, aes(x = reorder(PRODUCER, -salesGrowth), y = salesGrowth)) +
   geom_bar(stat = "identity", aes(fill = salesGrowth), show.legend = F) +
