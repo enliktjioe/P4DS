@@ -1,0 +1,67 @@
+---
+title: "R Notebook"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+
+insample accuracy
+accuracy model
+
+
+QUIZ
+The sales director at your bank in charge of telemarketing and direct marketing approach you for help:
+
+Instead of ringing up every customer in the database only to be rejected more than 88% of the time, she would like you to use the age, education, job profile, existing loan records (housing / personal) and outcome of the previous campaign to predict the customer's likelihood to subscribe to the new financial product (term deposit).
+
+The model output a probability (tip: bankmar_nn$net.result) so you'll need to convert that to a 'yes' or 'no'. The ground truth label is stored in your original data bank$y.
+```{r}
+library(dplyr)
+bank <- read.csv("data_input/bank-full.csv", sep = ";") %>% 
+  mutate_if(is.integer, scale)
+str(bank)
+```
+
+```{r, eval = F}
+prop.table(table(bank$y)) 
+```
+
+Question 1
+What is the accuracy of your model (in percentage to 2 decimal point, ie: 75.13, 80.21, etc.)? 
+`89.34`
+
+
+Question 2
+The accuracy isn't very meaningful in this case. Even if your model were to predict using a One-Rule approach and classified all the cases as 'no', you'd still obtain an 88.3% accuracy. Instead, the primary objective based on your colleague's requirement is to output a list from the initial 45,211 customers that have a high likelihood to purchase the term deposit through her telemarketing team. How long is the list of high-potential leads you've identified? 
+`1461`
+
+
+Question 3
+Out of the customers you've identified as 'high target', how many of them did actually sign up for the term deposit (in percentage to 2 decimal point, ie: 75.13, 80.21, etc.)? `66.05`
+
+Question 4
+What you just performed above in question (3) is also known as: 
+A.  Precision 
+B.  Recall 
+C.  Specificity 
+`Precision`
+
+
+```{r}
+bankmar_nn <- readRDS(file = "bank_marketing_nn.rds")
+```
+
+```{r}
+library(neuralnet)
+length(bankmar_nn$net.result)
+pred <- bankmar_nn$net.result[[1]]
+# summary(pred)
+pred <- factor(round(pred), levels=c(0,1), labels = c("no","yes"))
+```
+
+```{r}
+library(caret)
+confusionMatrix(pred, bank$y, positive = "yes")
+```
+

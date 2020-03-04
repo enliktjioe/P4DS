@@ -3,10 +3,6 @@ title: "Algoritma Academy: Neural Network and Deep Learning"
 author: "Samuel Chan"
 date: "Updated: January 31, 2019"
 output: 
-  pdf_document:
-    latex_engine: xelatex
-    fig_caption: yes
-  fig_caption: yes
   html_document:
     toc: true
     toc_depth: 2
@@ -16,6 +12,10 @@ output:
     theme: flatly
     highlight: tango
     css: style.css
+  fig_caption: yes
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
 ---
 
 # Background {.tabset}

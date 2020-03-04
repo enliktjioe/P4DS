@@ -1,0 +1,298 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(forecast)
+library(tidyverse)
+parking <- read_csv('data_input/dataset.csv')
+glimpse(parking)
+```
+
+```{r}
+parking.arranged <- parking %>% 
+  mutate(
+    Increase = lead(Occupancy) - Occupancy,
+    Timestamp = as.POSIXct(round(LastUpdated, units = "hours"))
+  ) %>% 
+  filter(Increase >= 0) %>% 
+  group_by(Timestamp) %>% 
+  summarise(Demand = sum(Increase)) %>% 
+  mutate(
+    Date = date(Timestamp),
+    Hour = hour(Timestamp)
+  ) %>% 
+  arrange(Date, Hour) %>% 
+  
+  complete(Date, Hour, fill = list(Demand = 0)) %>%
+  mutate(Timestamp = paste0(Date, " ", Hour, ":00:00")) %>% 
+  glimpse()
+```
+
+```{r}
+summary(parking.arranged)
+```
+
+```{r}
+data <- parking.arranged %>% 
+  select(Timestamp, Demand) %>% 
+  rename(datetime = Timestamp, order = Demand) %>% 
+  mutate(datetime = as.POSIXct(datetime))
+glimpse(data)
+```
+
+```{r}
+library(recipes)
+data_recipe <- recipe(order ~ ., data) %>%
+  step_sqrt(order) %>%
+  step_center(order) %>%
+  step_scale(order) %>%
+  prep()
+
+data_recipe_center <- data_recipe$steps[[2]]$means[[1]]
+data_recipe_scale <- data_recipe$steps[[3]]$sds[[1]]
+
+# "bake" the recipe
+data_processed <- bake(data_recipe, data)
+```
+
+```{r}
+train_length <- 10 * 7 * 8
+val_length <- 10 * 7
+test_length <- 10 * 7
+
+train_length + val_length + test_length
+nrow(data)
+```
+
+```{r}
+# sequence settings
+lookback <- 10 * 7
+timesteps <- 1
+
+# create lookback
+data_processed <- data_processed %>%
+  mutate(order_lag = lag(order, n = lookback)) %>%
+  filter(!is.na(order_lag))
+
+# cut the data for test dataset
+data_test <- data_processed %>% tail(test_length)
+data_processed <- data_processed %>% head(length(.) - test_length)
+
+# cut the data for validation dataset
+data_val <- data_processed %>% tail(val_length)
+data_processed <- data_processed %>% head(length(.) - val_length)
+
+# subset for train dataset
+data_train <- data_processed
+
+# remove processed data since it is unused
+# rm(data_processed)
+```
+
+```{r}
+# train x and y
+data_train_x <- data_train %>%
+  select(order_lag) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), timesteps, ncol(.)))
+
+data_train_y <- data_train %>%
+  select(order) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), ncol(.)))
+
+# train x and y
+data_val_x <- data_val %>%
+  select(order_lag) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), timesteps, ncol(.)))
+
+data_val_y <- data_val %>%
+  select(order) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), ncol(.)))
+
+# test x and y
+data_test_x <- data_test %>%
+  select(order_lag) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), timesteps, ncol(.)))
+
+data_test_y <- data_test %>%
+  select(order) %>%
+  data.matrix() %>%
+  array(dim = c(length(.), ncol(.)))
+```
+
+```{r}
+loss_root_mean_squared_error <- function(y_true, y_pred) {
+
+  K <- backend()
+
+  K$sqrt(K$mean((y_pred - y_true) ^ 2))
+
+}
+```
+
+```{r}
+library(keras)
+# layer lstm 1 settings
+unit_lstm1 <- 32
+dropout_lstm1 <- 0.01
+recurrent_dropout_lstm1 <- 0.01
+
+# layer lstm 2 settings
+unit_lstm2 <- 16
+dropout_lstm2 <- 0.01
+recurrent_dropout_lstm2 <- 0.01
+
+# initiate model sequence
+model <- keras_model_sequential()
+
+# model architecture
+model %>%
+  # lstm1
+  layer_lstm(
+    name = "lstm1",
+    units = unit_lstm1,
+    input_shape = c(timesteps, 1),
+    dropout = dropout_lstm1,
+    recurrent_dropout = recurrent_dropout_lstm1,
+    return_sequences = TRUE
+  ) %>%
+
+  # lstm2
+  layer_lstm(
+    name = "lstm2",
+    units = unit_lstm2,
+    dropout = dropout_lstm2,
+    recurrent_dropout = recurrent_dropout_lstm2,
+    return_sequences = FALSE
+  ) %>%
+
+  # output layer
+  layer_dense(
+    name = "output",
+    units = 1
+  )
+
+# compile the model
+model %>%
+  compile(
+    optimizer = "adam",
+    loss = loss_root_mean_squared_error
+  )
+
+# model summary
+summary(model)
+```
+
+```{r}
+epochs <- 30
+batch_size <- 24
+
+# fit the model
+history <- model %>% fit(
+  x = data_train_x,
+  y = data_train_y,
+  validation_data = list(data_val_x, data_val_y),
+  batch_size = batch_size,
+  epochs = epochs,
+  shuffle = FALSE,
+  verbose = 1
+)
+```
+
+```{r}
+plot(history)
+```
+
+```{r}
+model %>% evaluate(
+  x = data_train_x,
+  y = data_train_y
+)
+model %>% evaluate(
+  x = data_val_x,
+  y = data_val_y
+)
+model %>% evaluate(
+  x = data_test_x,
+  y = data_test_y
+)
+```
+
+```{r}
+data_train_pred <- predict(model, data_train_x) %>%
+  as.vector() %>% {(. * data_recipe_scale + data_recipe_center) ^ 2} %>%
+  round()
+
+# predict on validation
+data_val_pred <- predict(model, data_val_x) %>%
+  as.vector() %>% {(. * data_recipe_scale + data_recipe_center) ^ 2} %>%
+  round()
+
+# predict on test
+data_test_pred <- predict(model, data_test_x) %>%
+  as.vector() %>% {(. * data_recipe_scale + data_recipe_center) ^ 2} %>%
+  round()
+
+# combine with original datasets
+data_pred <- data %>%
+  rename(Actual = order) %>%
+  left_join(
+    tibble(
+      datetime = data_train$datetime,
+      Train = data_train_pred
+    )
+  ) %>%
+  left_join(
+    tibble(
+      datetime = data_val$datetime,
+      Validation = data_val_pred
+    )
+  ) %>%
+  left_join(
+    tibble(
+      datetime = data_test$datetime,
+      Test = data_test_pred
+    )
+  )
+```
+
+```{r message=FALSE, warning=FALSE}
+library(tidyquant)
+p <- data_pred %>%
+  tail(round(test_length * 4)) %>%
+  gather(
+    key = key, value = value,
+    Actual, Train, Validation, Test
+  ) %>%
+  mutate(
+    key = key %>% factor(levels = c(
+      "Actual", "Train", "Validation", "Test"
+    ))
+  ) %>%
+  ggplot(aes(x = datetime, y = value, colour = key)) +
+    geom_line() +
+    labs(
+      title = "Actual vs Prediction",
+      x = "", y = "", colour = ""
+    ) +
+    theme_tq() +
+    scale_colour_manual(
+      values = c(
+        "Actual" = "black",
+        "Train" = "green",
+        "Validation" = "red",
+        "Test" = "blue"
+      )
+    )
+p
+```

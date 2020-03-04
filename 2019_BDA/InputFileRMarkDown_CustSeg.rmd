@@ -1,0 +1,462 @@
+---
+title: "Business Data Analytics. Practice Session"
+subtitle: Customer segmentation
+author: University of Tartu
+output:
+  prettydoc::html_pretty: null
+  highlight: github
+  html_document: default
+  html_notebook: default
+  github_document: default
+  theme: cayman
+---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+```
+```{r setup, echo=FALSE}
+library(knitr)
+```
+
+Today practice session is about customer segmentation, which has become an essential part of marketing. During the practice we will deal with the RFM model and the heuristic approach, while later on we will demonstrate the automatic segmentation discovery via kmeans and hierarchical clustering. 
+
+## Packages
+
+For this practice session you will need next packages:
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(data.table)
+library(tm) # package for text mining
+library(wordcloud) # for word visualization
+library(ape) # dendrogram plotting
+library(ggdendro) # dendrogram plotting
+```
+In case some packages can not be found, place install them with the next command: 
+
+install.packages("name-of-the-package")
+
+## RFM
+Let's first load a dataset, where there is an information about clients and their orders along with the order details:
+
+```{r read_table, cache=TRUE}
+orders <- read.table(file.choose(), header=TRUE, sep=',') # orders_rfm.csv
+```
+
+The next logical step is to investigate what kind of data you have. 
+
+```{r}
+View(orders)
+```
+
+Let's perform **RFM analysis**, which means to calculate three key measures:
+
+1. **R** - recency score
+2. **F** - frequency score
+3. **M** - monetary score
+
+In our case recency will be expressed as number of days since the last order, frequency will be defined as the number of purchased items, and monetary score is the total amount spent during the defined period. There are a lot of variations of these definitions. For example, when necessary, you may want to aggregate recency component on a yearly basis rather than using days; frequency and monetary scores can be expressed as the percentage of one period to another, etc. Moreover, it is important to define the **period** under investigation:
+
+First let's pick date of interest:
+
+```{r reporting_date}
+reporting_date <- as.Date('2017-03-10', format='%Y-%m-%d')
+reporting_date
+```
+
+Next, we have to change the type of the date in our table from factor to date:
+
+```{r}
+str(orders)
+orders$order_date <- as.Date(orders$order_date, format='%Y-%m-%d')
+str(orders)
+```
+
+For more details about the format of the dates refer to:
+https://www.statmethods.net/input/dates.html
+
+Since we are interested only in orders that happened before specified date, we will filter unneccessary orders:
+
+```{r}
+orders <- filter(orders, order_date <= reporting_date)
+```
+
+As we discussed previously, the descriptive part helps to get sense of the data:
+
+```{r}
+length(unique(orders$client_id)) # Client ids
+table(orders$product) # Times each product was bought
+```
+
+<div style="background-color:rgba(252,248,227,1); text-align:left; color:rgb(192,152,83); vertical-align: left; padding:14px 0; padding-left:12.8px; margin-top:20px; border-radius: 5px; border: 1px solid rgba(251,238,213,1);">
+Note. We will have some comments with package name in order to follow where the functions originate from.
+</div>
+
+We will calcualte the frequency, recency and monetary values in the following way: 
+
+```{r}
+#dplyr
+frm_tbl_initial <- orders %>%
+  group_by(client_id) %>%
+  summarise(order_frequency = n(), # amount of products
+            order_recency = min(reporting_date - order_date), # days since last order 
+            order_monetary = sum(money_spent)) # total amount spent
+head(frm_tbl_initial)
+```
+
+Order recency is a time object (days), which can cause errors later. We need to transform it into numeric value:
+
+```{r}
+class(frm_tbl_initial$order_recency) # checks type of the variable
+frm_tbl_initial$order_recency <- as.numeric(frm_tbl_initial$order_recency) 
+class(frm_tbl_initial$order_recency)
+```
+
+We will investigate the distribution of the values in our RFM calculations:
+
+```{r}
+#ggplot2
+ggplot(frm_tbl_initial, aes(x=order_recency)) + geom_histogram(fill='#8b3840', color='grey60', binwidth = 1) + theme_bw()
+ggplot(frm_tbl_initial, aes(x=order_frequency)) + geom_histogram(fill='#8b3840', color='grey60', binwidth = 1) + theme_bw()
+```
+<div style="background-color:rgba(255,160,122,0.3); text-align:left; color:rgb(178,34,34); vertical-align: middle; padding:14px 0; padding-left:12.8px; margin-top:20px; margin-bottom:20px; border-radius: 5px; border: 1px solid rgba(242,222,222,0.5);">
+Task: Demonstrate the code for the histogram of the monetary values
+</div>
+
+```{r echo=FALSE}
+ggplot(frm_tbl_initial, aes(x=order_monetary)) + geom_histogram(fill='#8b3840', color='grey60') + theme_bw()
+```
+
+Now, we need to define the limits of our RFM values and divide these intervals into bins. There are, again, many ways to proceed. We will use our **domain knowledge** and define cut points manually. However, we can define bins using quantiles, using equal intervals in terms of values or equal intervals in terms of number of observations in each bin.
+
+<div style="background-color:rgba(252,248,227,1); text-align:left; color:rgb(192,152,83); vertical-align: left; padding:14px 0; padding-left:12.8px; margin-top:20px; border-radius: 5px; border: 1px solid rgba(251,238,213,1);">
+Note. ```cut_interval``` makes n groups with equal range, ```cut_number``` makes n groups with (approximately) equal numbers of observations. ```cut``` function allows to specify cutting points manually. 
+</div>
+
+```{r rfm_bins}
+summary(frm_tbl_initial) # to explore limits
+```
+
+Here we set breaks according to explored data above:
+
+```{r}
+fr_tbl <- mutate(frm_tbl_initial, 
+                 frequency_bins = cut(order_frequency,
+                                      breaks = c(0,4,7,8,10,31)))
+table(fr_tbl$frequency_bins)
+```
+
+```{r}
+fr_tbl <- mutate(fr_tbl, 
+                 recency_bins = cut(order_recency,
+                                      breaks = c(-1,11,23,26,39,67)))
+table(fr_tbl$recency_bins)
+```
+
+```{r}
+fr_tbl <- mutate(fr_tbl, 
+                 monetary_bins = cut(order_monetary, 
+                                     breaks=c(9,330,622,739,1008,3345)))
+table(fr_tbl$monetary_bins)
+```
+
+Now, we have the clients allocated into bins, which provides already a good intution, what kind of customers and how many of those we have. We can explore 2-way and 3-way frequency tables:
+
+```{r}
+table(frequency=fr_tbl$frequency_bins, recency=fr_tbl$recency_bins)
+```
+```{r}
+table(frequency=fr_tbl$frequency_bins, recency=fr_tbl$recency_bins, monetary=fr_tbl$monetary_bins)
+```
+We can see from the table that the order of the bins is from the smallest value to the higher. However, if we want the best clients to be in the upper-left corner (also, later for the plots), we need to **relevel** our factor feature -- bins. Recency can be the same - the more recent the purchase is, the better. However, for monetary and frequency scores we want it to be the opposite -- the higher the bin, the better. 
+
+```{r}
+fr_tbl$frequency_bins <- factor(fr_tbl$frequency_bins, levels=rev(levels(fr_tbl$frequency_bins)))
+fr_tbl$monetary_bins <- factor(fr_tbl$monetary_bins, levels=rev(levels(fr_tbl$monetary_bins)))
+
+table(frequency=fr_tbl$frequency_bins, recency=fr_tbl$recency_bins)
+```
+
+There are also some plots that may help us to understand our rfm tables better:
+
+```{r rfm_heatmap}
+fr_tbl_counts <- fr_tbl %>% group_by(frequency_bins, recency_bins) %>% summarise(count=n())
+p_basic <- ggplot(fr_tbl_counts, aes(x=recency_bins, y=frequency_bins)) + geom_tile(aes(fill=count))+ 
+  geom_text(aes(label = count)) +
+  scale_fill_gradient(low='#f0f0f0', high="#636363") + theme_bw(base_size=20)
+p_basic
+```
+
+```{r}
+p_quadrants <- p_basic +
+  ggplot2::annotate("rect", xmin = 0, xmax=3.47, ymin=3.47, ymax=6, color='green', alpha=0.1, fill='green') +
+  ggplot2::annotate("rect", xmin = 0, xmax=3.47, ymin=2.5, ymax=3.47, color='yellow', alpha=0.1, fill='yellow') +
+  ggplot2::annotate("rect", xmin = 0, xmax=3.47, ymin=0, ymax=2.5, color='blue', alpha=0.1, fill='blue') +
+  ggplot2::annotate("rect", xmin = 3.5, xmax=6, ymin=3.47, ymax=6, color='red', alpha=0.1, fill='red') +
+  ggplot2::annotate("rect", xmin = 3.5, xmax=6, ymin=0, ymax=3.47, color='black', alpha=0.1, fill='black')
+p_quadrants
+
+p_quadrants + 
+  ggplot2::annotate("text", x=1.8, y=5.8, label='New') +
+  ggplot2::annotate("text", x=4.8, y=5.8, label='Lost') +
+  ggplot2::annotate("text", x=1.4, y=2.7, label='Promising') +
+  ggplot2::annotate("text", x=1.8, y=0.2, label='Loyal customers') +
+  ggplot2::annotate("text", x=4.8, y=0.2, label='Hibernating loyal customers')
+```
+
+Another approach to RFM calculation is to replace bins with numeric values, usually from 1 to 5, and create an RFM score which is just putting the numbers together. For example, a customer, who belongs to the first bin in **R**, to the second in **F** and to the fifth in **M** will have an RFM score of 125: 
+
+```{r}
+fr_tbl_score <- fr_tbl %>% 
+  mutate(f_score = as.numeric(frequency_bins),
+                                  r_score = as.numeric(recency_bins),
+                                  m_score = as.numeric(monetary_bins)) %>%
+  mutate(RFM_score = paste(f_score, r_score, m_score, sep=''))
+```
+```{r}
+fr_tbl_score %>% arrange(RFM_score) %>% View  
+# will open a table in the view format, arrange sorts the data
+```
+
+The RFM approach is widely used and has a lot of use cases on practice. We can find our best and worst customers, we can decide where to focus our attention, to whom send the campaign and offer discounts. It is clear and reasonably easy to interpret (the only problem is how to visualize the three dimensions simultaniously). However, it requires your attention and highly depends on your choices. It is unlikely you can discover something unexpected. The automatic segmentation is a foray into uncharted territory of your data. Let's see how it can be done. 
+
+## K-means clustering
+Firstly, if we want to use k-means approach we need to scale features by substructing mean and dividing by standard deviation. This can be done using ```scale``` function. We firstly will cluster the previous dataset using only intial values (not scores or bins!)
+
+```{r}
+data_clustering <- frm_tbl_initial %>%
+  mutate(order_frequency=scale(order_frequency), 
+         order_recency=scale(order_recency), 
+         order_monetary=scale(order_monetary))
+head(data_clustering)
+```
+
+Then, it is wise to explore what parameters kmeans method requires:
+
+```{r}
+?kmeans
+```
+```{r}
+clusters <- kmeans(data_clustering[,-1], centers = 4, nstart=20)
+clusters
+```
+
+Let us assgn clusters to the clients, by adding it to the data frame
+
+```{r}
+data_clustering$cluster <- as.factor(clusters$cluster) # we need it to be a factor for the plot
+ggplot(data_clustering, aes(x=order_frequency, y=order_recency, color=cluster)) + geom_point(size=2) + theme_bw()
+```
+
+We can plot all three plots together:
+
+```{r}
+#gridExtra
+p1 <- ggplot(data_clustering, aes(x=order_frequency, y=order_recency, color=cluster)) + geom_point(size=2) + theme_bw()
+p2 <- ggplot(data_clustering, aes(x=order_frequency, y=order_monetary, color=cluster)) + geom_point(size=2) + theme_bw()
+p3 <- ggplot(data_clustering, aes(x=order_monetary, y=order_recency, color=cluster)) + geom_point(size=2) + theme_bw()
+grid.arrange(p1,p2,p3, nrow=3)
+```
+
+The reasonable question to ask is how to choose number of clusters? It is usually the iterative process where the clusters should be manually inspected. You should be asking the following questions. Are they are different enough? Do they make sense? If I change number of clusters, does the structure changes a lot or the pattern of clusters persists? 
+There are also various techniques how to identify number of clusters. These methods provide you with some additional intuition (but they do not guarantee this is the best number of clusters for your problem). Also, be aware that the clusters can be found even when the underlying structure does not have them. 
+We will take a look at the most common **elbow method**. 
+
+```{r}
+# finding optimal number of clusters
+elbow_method <- function(data, max_k=15){
+  require(ggplot2)
+  wss <- 0
+  for (i in 1:max_k){
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)
+  }
+  p <- data.frame(number_of_clusters=c(1:max_k), wss=wss) %>%
+    ggplot(aes(x=number_of_clusters, y=wss)) + geom_point() + 
+    geom_line() + theme_bw() + ylab("Within groups sum of squares")
+  return(print(p))
+}
+
+# apply the function
+elbow_method(data_clustering[,-1], max_k=15)
+```
+
+Usually there is a tradeoff, we want as few clusters as possible, because it is easy to interpret them (nobody wants to interpret and act upon 79 segments of customers), but we want to minimize the ```wss``` statistics. The idea behind the elbow methods is that we want to find a point, where the wss is small, but the function does not become smooth (adding more clusters does not reduce much of the variance), so we are looking for an angle in the curve.
+
+## Real-life grocery dataset
+Currently we don't know much about the customers themselves, which makes difficult to interpret how meaningful is the segmentation. In general, we shouldn't limit ourselves to RFM values, we can combine many features. Also, not only customers can be segmented, we can cluster products, purchases, product baskets or even sequences of actions in time. Let's take a look at the real-life large dataset. The details about it and the dataset itself can be found here: [“The Instacart Online Grocery Shopping Dataset 2017”](https://tech.instacart.com/3-million-instacart-orders-open-sourced-d40d29ead6f2). 
+Let's use a library ```data.table``` to speed up the process.
+
+```{r grocery_dataset, results="hide"}
+dt_orders <- fread(file.choose()) # orders.csv
+dt_products <- fread(file.choose()) # order_products__prior.csv
+product_names <- fread(file.choose()) # products.csv
+```
+
+First, we should examine the data:
+
+```{r}
+head(dt_orders,3)
+head(dt_products,3)
+head(product_names,3)
+```
+
+We need to merge product ids with their names and then orders and products by ```order_id```:
+
+```{r}
+dt_products <- left_join(dt_products, product_names[,c(1,2)], by="product_id")
+head(dt_products,3)
+dt_full <- left_join(dt_orders, dt_products, by='order_id')
+head(dt_full,3)
+```
+
+Let's now define what features we want to use for the clustering of products.
+
+<div style="background-color:rgba(252,248,227,1); text-align:left; color:rgb(192,152,83); vertical-align: left; padding:14px 0; padding-left:12.8px; margin-top:20px; border-radius: 5px; border: 1px solid rgba(251,238,213,1);">
+Note. Don't forget to take a look at the dictionary that explains feature names: 
+[dictionary](https://gist.github.com/jeremystan/c3b39d947d9b88b3ccff3147dbcf6c6b)
+</div>
+
+The list of the features that we want to extract:
+
+* how many times each product was bought
+* how many unique users bought it
+* in how many different orders this product appears
+* most frequent day of week
+* most frequent hour of the day
+* what is the average number of day since the last order
+* most frequent order of adding it to the cart
+* how frequently it was bought before
+
+For my convinience I specify the **most frequent** function in advance, which is the Mode statistic (returns the most frequent element):
+
+```{r}
+freq_value <- function(x) {
+  ux <- unique(x)
+  ux[which.max(
+    tabulate(match(x, ux)) # number of times each item occurs
+    )]
+}
+```
+
+Feature collection:
+
+```{r}
+features <- dt_full %>%
+  group_by(product_id) %>% # we want all this calculated per product
+  summarise(count=n(), # total orders
+            unique_users=length(unique(user_id)), # number of unique users
+            unique_orders=length(unique(order_id)), 
+            freq_ord_dow = freq_value(order_dow), # the most frequent day of the week
+            freq_hour=freq_value(order_hour_of_day),
+            avg_days_prior=mean(days_since_prior_order,na.rm=TRUE), # av. of days since last order
+            freq_add_to_cart = freq_value(add_to_cart_order), # the most frequent order in which product was added
+            reordered_n = sum(reordered)) # amount of reorders
+```
+
+Note that ```na.rm=TRUE```. If you check the summary, you discover that we have missing values. If we do not highlight that for average claculaton we ignore missing values, the result will be ```NA```. Apparently, for r ```(3+2+NA)/3 = NA```.
+
+## Missing data problem
+So, how to work with missing data. It is a very broad topic itself. Let's see how we can deal with it:
+
+```{r}
+filter(features, is.na(product_id)==TRUE) # always observe your missing values before proceeding! 
+features <- filter(features, is.na(product_id)==FALSE)
+```
+
+We can't do anything with the ```product_id``` being missing as it is id. We remove it.
+Now, we proceed the same as previously, we scale our features:
+
+```{r}
+#dplyr
+scaled_features <- mutate_at(features, vars(-product_id), scale)
+scaled_features
+```
+
+However, we still have missing values and cannot run kmeans. Why? Let us take a look:
+
+```{r}
+filter(features, is.na(avg_days_prior)==TRUE) %>% View
+filter(dt_full, product_id==4908) # product appears only once and average days are missing
+```
+
+We can see that only ```average_days_prior``` have missing values. 
+
+```{r}
+scaled_features <- na.omit(scaled_features)
+```
+
+Let's find amount of clusters first:
+
+```{r}
+elbow_method(data=scaled_features, max_k=30)
+```
+```{r}
+clusters <- kmeans(scaled_features, centers = 4, nstart=20)
+features_with_cluster <- na.omit(features)
+features_with_cluster$cluster <- as.factor(clusters$cluster)
+features_with_cluster <- left_join(features_with_cluster, product_names[,c(1,2)], by="product_id") # to see what are the product names
+```
+
+Let's visualize it.
+
+```{r}
+ggplot(features_with_cluster, aes(x=count, y=unique_users, color=cluster)) + geom_point() + theme_bw() + scale_x_log10() + scale_y_log10()
+
+ggplot(features_with_cluster, aes(x=freq_ord_dow)) + geom_density() + facet_grid(~cluster)
+```
+
+Now let's use another ways of visualization
+
+```{r}
+corpus <- Corpus(VectorSource(
+  filter(features_with_cluster, cluster==2)$product_name))
+tdm <- TermDocumentMatrix(corpus)
+m <- as.matrix(tdm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+wordcloud(d$word,d$freq, min.freq=2, max.words=50)
+```
+
+You can change the cluster number and get the results of other clusters. By changing ```min.freq and max.words``` you can regulate the thresholds for word frequency to display and the amount of words to show. 
+
+## Hierarchical clustering
+
+The second clustering method that we can use for segmentation is hierarchical clustering
+
+```{r}
+distance_m <- dist(as.matrix(frm_tbl_initial[,-1])) 
+hc <- hclust(distance_m)
+plot(hc)
+```
+
+Let's take a small set of the data:
+
+```{r}
+#small sample of data 
+features <- left_join(features, product_names[,c(1,2)], by="product_id")
+features_sample <- sample_n(features, size = 100) 
+features_sample <- as.data.frame(features_sample) # we need this function just because the dendrogram cannot see labels
+row.names(features_sample) = features_sample$product_name # we will assign product names as row names. just strange unlogical behaviour of dendogram plot 
+features_sample$product_name <- NULL
+```
+
+```{r}
+distance_m <- dist(as.matrix(features_sample[,-c(1)]))
+hc <- hclust(distance_m)
+plot(hc)
+```
+
+A few other ways to plot a dendrogram (don't forget to install packages first):
+
+```{r alternative}
+plot(as.phylo(hc), type = "fan")
+ggdendrogram(hc, rotate = TRUE, size = 4)
+```
+
+
+
+
+
+
+

@@ -81,3 +81,9 @@ dataset.csv
 11_NeuralNetwork/NN/learn_keras_basic_classification.nb.html
 11_NeuralNetwork/NN/rsconnect
 11_NeuralNetwork/NN/.RDataTmp
+
+11_NeuralNetwork/NN_Original/data_input/
+
+11_NeuralNetwork/NN_Original/bank_marketing_nn.rds
+
+11_NeuralNetwork/NN_Original/neuralnetwork_cache/
